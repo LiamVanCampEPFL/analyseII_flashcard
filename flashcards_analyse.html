@@ -13,6 +13,7 @@
     --parcoeur: #0d9488;
     --serie: #db2777;
     --prim:  #7c3aed;
+    --dl:    #b45309;
     --bg:      #f8fafc;
     --surface: #ffffff;
     --surface2: #f1f5f9;
@@ -57,6 +58,7 @@
   .filter-btn[data-cat="parcoeur"].active { background: var(--parcoeur); }
   .filter-btn[data-cat="serie"].active { background: var(--serie); }
   .filter-btn[data-cat="prim"].active  { background: var(--prim); }
+  .filter-btn[data-cat="dl"].active    { background: var(--dl); }
   .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
   .icon-btn {
     padding: 6px 14px; border-radius: 8px;
@@ -195,6 +197,7 @@
   <button class="filter-btn" data-cat="serie" style="color:var(--serie)">Séries</button>
   <button class="filter-btn" data-cat="parcoeur" style="color:var(--parcoeur)">Par cœur</button>
   <button class="filter-btn" data-cat="prim" style="color:var(--prim)">Primitives</button>
+  <button class="filter-btn" data-cat="dl" style="color:var(--dl)">Séries / DL</button>
   <div class="sep"></div>
   <button class="icon-btn active-mode" id="btn-mode-grid">⊞ Grille</button>
   <button class="icon-btn" id="btn-mode-scroll">☰ Défilement</button>
@@ -802,6 +805,70 @@ const CARDS = [
 {cat:'prim', q:'∫ 1/√(r² − x²) dx = ?', a:`arcsin(x/r) + C`, choices:['arcsin(x/r)','(1/r) arcsin(x/r)','arctan(x/r)','arccos(x/r)']},
 {cat:'prim', q:'∫ √(x² + a) dx = ?', a:`½ x√(x²+a) + (a/2) ln|x + √(x²+a)| + C`, choices:['½x√(x²+a) + (a/2)ln|x+√(x²+a)|','√(x²+a)','x²/√(x²+a)','(2/3)(x²+a)^(3/2)']},
 {cat:'prim', q:'∫ √(r² − x²) dx = ?', a:`½ x√(r²−x²) + (r²/2) arcsin(x/r) + C`, choices:['½x√(r²−x²) + (r²/2)arcsin(x/r)','√(r²−x²)','(r²/2)arcsin(x/r)','(2/3)(r²−x²)^(3/2)']},
+
+// ═══════════════ SÉRIES ENTIÈRES / DL ═══════════════
+{cat:'dl', q:'Formule de Taylor-Lagrange', hint:'Reste explicite',
+ a:`f(x) = Σ_{k=0}^n f^(k)(a)/k! (x-a)^k + f^(n+1)(ξ)/(n+1)! (x-a)^(n+1)\nDL d ordre 1 <=> derivable\nTangente : y = f(a) + f'(a)(x-a)`,
+ choices:['Σ f^(k)(a)/k! (x-a)^k + reste','Σ f^(k)(a)/k! x^k','Σ f^(k)(0)/k! (x-a)^k','Σ f^(k)(a) (x-a)^k']},
+{cat:'dl', q:'Developpement de Mac-Laurin (Taylor en a = 0)',
+ a:`f(x) = f(0) + f'(0)x + f''(0)/2! x^2 + ... + f^(n)(0)/n! x^n + o(x^n)`,
+ choices:['Σ f^(k)(0)/k! x^k','Σ f^(k)(a)/k! x^k','Σ f^(k)(0)/k x^k','Σ f^(k)(0) x^k']},
+{cat:'dl', q:'DL de e^x en 0', hint:'domaine : R',
+ a:`e^x = 1 + x + x^2/2! + x^3/3! + ... = Σ x^k/k!`,
+ choices:['Σ x^k/k!','Σ x^k','Σ (-1)^k x^k/k!','Σ x^k/(k+1)!']},
+{cat:'dl', q:'DL de 1/(1-x) en 0', hint:'domaine : |x| < 1',
+ a:`1/(1-x) = 1 + x + x^2 + ... + x^n + o(x^n) = Σ x^k   (|x| < 1)`,
+ choices:['Σ x^k','Σ (-1)^k x^k','Σ x^k/k!','Σ x^k/k']},
+{cat:'dl', q:'DL de 1/(1+x) en 0', hint:'domaine : |x| < 1',
+ a:`1/(1+x) = 1 - x + x^2 - ... = Σ (-1)^k x^k   (|x| < 1)`,
+ choices:['Σ (-1)^k x^k','Σ x^k','Σ x^k/k!','Σ (-1)^k x^k/k']},
+{cat:'dl', q:'DL de ln(1+x) en 0', hint:'domaine : (-1, 1]',
+ a:`ln(1+x) = x - x^2/2 + x^3/3 - ... = Σ (-1)^(k+1) x^k/k   (x dans (-1,1])`,
+ choices:['Σ (-1)^(k+1) x^k/k','Σ x^k/k','Σ (-1)^k x^k/k!','Σ x^k/k!']},
+{cat:'dl', q:'DL de ln(1-x) en 0', hint:'domaine : |x| < 1',
+ a:`ln(1-x) = -x - x^2/2 - x^3/3 - ... = -Σ x^k/k   (|x| < 1)`,
+ choices:['-Σ x^k/k','Σ x^k/k','Σ (-1)^k x^k/k','-Σ (-1)^k x^k/k']},
+{cat:'dl', q:'DL de sin x en 0', hint:'domaine : R',
+ a:`sin x = x - x^3/3! + x^5/5! - ... = Σ (-1)^k x^(2k+1)/(2k+1)!`,
+ choices:['Σ (-1)^k x^(2k+1)/(2k+1)!','Σ (-1)^k x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ x^k/k!']},
+{cat:'dl', q:'DL de cos x en 0', hint:'domaine : R',
+ a:`cos x = 1 - x^2/2! + x^4/4! - ... = Σ (-1)^k x^(2k)/(2k)!`,
+ choices:['Σ (-1)^k x^(2k)/(2k)!','Σ (-1)^k x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ x^k/k!']},
+{cat:'dl', q:'DL de sinh x en 0', hint:'domaine : R',
+ a:`sinh x = x + x^3/3! + x^5/5! + ... = Σ x^(2k+1)/(2k+1)!`,
+ choices:['Σ x^(2k+1)/(2k+1)!','Σ (-1)^k x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ x^k/k!']},
+{cat:'dl', q:'DL de cosh x en 0', hint:'domaine : R',
+ a:`cosh x = 1 + x^2/2! + x^4/4! + ... = Σ x^(2k)/(2k)!`,
+ choices:['Σ x^(2k)/(2k)!','Σ (-1)^k x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ x^k/k!']},
+{cat:'dl', q:'DL de arctan x en 0', hint:'domaine : [-1, 1]',
+ a:`arctan x = x - x^3/3 + x^5/5 - ... = Σ (-1)^k x^(2k+1)/(2k+1)   (x dans [-1,1])`,
+ choices:['Σ (-1)^k x^(2k+1)/(2k+1)','Σ (-1)^k x^(2k+1)/(2k+1)!','Σ x^(2k+1)/(2k+1)','Σ (-1)^k x^k/k']},
+{cat:'dl', q:'DL de (1+x)^α en 0', hint:'binome generalise, |x| < 1',
+ a:`(1+x)^α = 1 + αx + α(α-1)/2! x^2 + α(α-1)(α-2)/3! x^3 + ...`,
+ choices:['1 + αx + α(α-1)/2! x^2 + ...','1 + αx + α^2 x^2 + ...','Σ x^k/k!','e^x']},
+{cat:'dl', q:'DL de tan x en 0 (premiers termes)',
+ a:`tan x = x + x^3/3 + 2x^5/15 + ...`,
+ choices:['x + x^3/3 + 2x^5/15 + ...','x - x^3/3 + x^5/5 - ...','x + x^3/3! + x^5/5! + ...','1 + x^2/2 + ...']},
+{cat:'dl', q:'DL de arcsin x en 0 (premiers termes)',
+ a:`arcsin x = x + x^3/6 + 3x^5/40 + ...`,
+ choices:['x + x^3/6 + 3x^5/40 + ...','x - x^3/6 + ...','x + x^3/3! + ...','x - x^3/3 + x^5/5 - ...']},
+// Domaines
+{cat:'dl', q:'Domaine de convergence : e^x', a:`R (converge partout)`, choices:['R','(-1,1)','(-1,1]','[-1,1]']},
+{cat:'dl', q:'Domaine de convergence : 1/(1-x)', a:`(-1, 1)`, choices:['(-1,1)','[-1,1]','R','(0,1)']},
+{cat:'dl', q:'Domaine de convergence : ln(1+x)', a:`(-1, 1]  (converge aussi en x=1)`, choices:['(-1,1]','(-1,1)','[-1,1]','R']},
+{cat:'dl', q:'Domaine de convergence : arctan x', a:`[-1, 1]`, choices:['[-1,1]','(-1,1)','(-1,1]','R']},
+{cat:'dl', q:'Domaine de convergence : sin x et cos x', a:`R`, choices:['R','(-1,1)','(-π,π)','[-1,1]']},
+{cat:'dl', q:'Domaine de convergence : sinh x et cosh x', a:`R`, choices:['R','(-1,1)','(0,+inf)','[-1,1]']},
+// Operations
+{cat:'dl', q:'DL d une composee f(g(x)) : methode',
+ a:`Substituer le DL de g(x) dans celui de f.\nEx : e^(sin x) avec u = sin x = x - x^3/6 + ...\ne^u = 1 + u + u^2/2 + ... = 1 + x + x^2/2 - x^3/3 + ...`,
+ choices:['Substituer le DL de g dans f','Multiplier les DL','Deriver puis integrer','Appliquer Taylor directement']},
+{cat:'dl', q:'DL d un produit f(x)g(x) : methode',
+ a:`Multiplier terme a terme jusqu a l ordre voulu.\nEx : e^x cos x = (1+x+x^2/2+...)(1-x^2/2+...) = 1 + x + o(x^2)`,
+ choices:['Multiplier terme a terme','Additionner les DL','Composer les DL','Deriver les DL']},
+{cat:'dl', q:'DL de 1/f(x) quand f(0)=1 : methode',
+ a:`Ecrire 1/f(x) = 1/(1+h(x)) puis appliquer 1/(1+u) = 1-u+u^2-...\noù u = f(x)-1`,
+ choices:['1/(1+u) avec u=f(x)-1','Deriver f','Integrer f','Taylor directement']},
 
 ];
 

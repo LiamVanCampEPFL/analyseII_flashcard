@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards Analyse II — Liam Van Camp</title>
+<style>
+  :root {
+    --trigo: #6366f1;
+    --deriv: #10b981;
+    --integ: #f97316;
+    --edo:   #3b82f6;
+    --parcoeur: #0d9488;
+    --serie: #db2777;
+    --bg:      #f8fafc;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --border:  #e2e8f0;
+    --text:    #1e293b;
+    --muted:   #64748b;
+    --shadow:  0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--surface); padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  header h1 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+  header h1 span { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
+  .stats { display: flex; gap: 16px; font-size: 0.82rem; color: var(--muted); }
+  .stats b { color: var(--text); font-weight: 600; }
+
+  .toolbar {
+    display: flex; gap: 8px; padding: 14px 32px;
+    flex-wrap: wrap; align-items: center;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .filter-btn {
+    padding: 6px 16px; border-radius: 999px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--muted); font-size: 0.82rem; cursor: pointer;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .filter-btn:hover { border-color: #94a3b8; color: var(--text); }
+  .filter-btn.active { color: #fff !important; border-color: transparent; }
+  .filter-btn[data-cat="all"].active  { background: var(--text); }
+  .filter-btn[data-cat="trigo"].active { background: var(--trigo); }
+  .filter-btn[data-cat="deriv"].active { background: var(--deriv); }
+  .filter-btn[data-cat="integ"].active { background: var(--integ); }
+  .filter-btn[data-cat="edo"].active   { background: var(--edo); }
+  .filter-btn[data-cat="parcoeur"].active { background: var(--parcoeur); }
+  .filter-btn[data-cat="serie"].active { background: var(--serie); }
+  .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .icon-btn {
+    padding: 6px 14px; border-radius: 8px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--muted); cursor: pointer; font-size: 0.82rem;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); border-color: #94a3b8; }
+  .icon-btn.active-mode { background: var(--text); color: #fff; border-color: var(--text); }
+  .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+  .progress-wrap { padding: 10px 32px 14px; background: var(--bg); }
+  .progress-bar { height: 6px; background: var(--border); border-radius: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--trigo), var(--edo)); border-radius: 6px; transition: width 0.4s; }
+  .progress-label { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+
+  /* GRID */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 20px 32px 48px; }
+  .cards-scroll { display: none; flex-direction: column; align-items: center; gap: 0; padding: 28px 32px 60px; }
+  .cards-scroll.active { display: flex; }
+  .cards-grid.hidden { display: none; }
+
+  /* SCROLL */
+  .scroll-card { width: 100%; max-width: 680px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; box-shadow: var(--shadow); }
+  .scroll-item { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 680px; }
+  .scroll-connector { width: 2px; height: 20px; background: var(--border); }
+  .scroll-question { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.5; }
+  .scroll-hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; }
+  .scroll-divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .scroll-answer-wrap { display: none; }
+  .scroll-answer-wrap.revealed { display: block; }
+  .scroll-answer-text { font-size: 0.92rem; line-height: 1.8; color: #334155; white-space: pre-wrap; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .scroll-reveal-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 18px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--muted); font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
+  .scroll-reveal-btn:hover { background: var(--surface2); color: var(--text); border-color: #94a3b8; }
+  .scroll-footer { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; align-items: center; }
+  .scroll-footer.hidden { display: none; }
+
+  /* FLIP CARD */
+  .card-wrap { perspective: 1200px; }
+  .card { width: 100%; min-height: 190px; position: relative; transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(.4,0,.2,1); cursor: pointer; border-radius: 14px; }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; border-radius: 14px; padding: 18px 20px; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); }
+  .card-back { transform: rotateY(180deg); background: var(--surface2); }
+  .card-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 999px; width: fit-content; margin-bottom: 10px; }
+  .tag-trigo { background: #ede9fe; color: var(--trigo); }
+  .tag-deriv  { background: #d1fae5; color: #059669; }
+  .tag-integ  { background: #ffedd5; color: var(--integ); }
+  .tag-edo    { background: #dbeafe; color: var(--edo); }
+  .tag-parcoeur { background: #ccfbf1; color: var(--parcoeur); }
+  .tag-serie { background: #fce7f3; color: var(--serie); }
+  .card-question { font-size: 0.95rem; font-weight: 600; line-height: 1.5; flex: 1; color: var(--text); }
+  .card-hint { font-size: 0.73rem; color: var(--muted); margin-top: 8px; }
+  .card-flip-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 8px; }
+  .card-answer { font-size: 0.85rem; line-height: 1.7; flex: 1; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .card-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+  .vote-btn { padding: 4px 12px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  .vote-btn:hover { border-color: #94a3b8; color: var(--text); }
+  .vote-btn.ok { border-color: var(--deriv); color: var(--deriv); background: #d1fae5; }
+  .vote-btn.ko { border-color: #ef4444; color: #ef4444; background: #fee2e2; }
+  .empty { text-align: center; padding: 80px 32px; color: var(--muted); }
+
+  /* ── QCM MODE ── */
+  .cards-qcm { display: none; flex-direction: column; align-items: center; gap: 0; padding: 28px 32px 60px; }
+  .cards-qcm.active { display: flex; }
+  .qcm-card { width: 100%; max-width: 680px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; box-shadow: var(--shadow); }
+  .qcm-item { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 680px; }
+  .qcm-question { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 18px; line-height: 1.5; }
+  .qcm-choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .qcm-choice {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .qcm-choice:hover { border-color: var(--edo); background: #eff6ff; }
+  .qcm-choice input[type="radio"] { accent-color: var(--edo); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+  .qcm-choice label { font-size: 0.9rem; color: var(--text); cursor: pointer; line-height: 1.4; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .qcm-choice.correct { border-color: var(--deriv); background: #d1fae5; }
+  .qcm-choice.wrong   { border-color: #ef4444; background: #fee2e2; }
+  .qcm-choice.missed  { border-color: var(--deriv); background: #d1fae5; border-style: dashed; }
+  .qcm-verify-btn {
+    padding: 8px 24px; border-radius: 10px; border: none;
+    background: var(--edo); color: #fff; font-size: 0.88rem;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .qcm-verify-btn:hover { opacity: 0.85; }
+  .qcm-verify-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .qcm-feedback { margin-top: 14px; font-size: 0.88rem; font-weight: 600; padding: 8px 14px; border-radius: 8px; display: none; }
+  .qcm-feedback.ok  { background: #d1fae5; color: #065f46; display: block; }
+  .qcm-feedback.ko  { background: #fee2e2; color: #991b1b; display: block; }
+  .qcm-score-bar { text-align: center; padding: 6px 32px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); }
+  .qcm-score-bar b { color: var(--text); }
+
+  /* STUDY MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 100; justify-content: center; align-items: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 20px; width: min(580px, 95vw); padding: 36px; position: relative; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface2); border: none; color: var(--muted); font-size: 1rem; cursor: pointer; border-radius: 8px; width: 32px; height: 32px; }
+  .modal-close:hover { background: var(--border); color: var(--text); }
+  .modal-tag { margin-bottom: 14px; }
+  .study-question { font-size: 1.2rem; font-weight: 700; line-height: 1.5; min-height: 70px; color: var(--text); }
+  .study-answer { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border); display: none; }
+  .study-answer.visible { display: block; }
+  .study-answer-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .modal-nav { display: flex; gap: 10px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+  .nav-btn { padding: 9px 22px; border-radius: 10px; border: none; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn-reveal { background: var(--text); color: #fff; }
+  .btn-reveal:hover { opacity: 0.85; }
+  .btn-ok { background: var(--deriv); color: #fff; }
+  .btn-ok:hover { opacity: 0.85; }
+  .btn-ko { background: #ef4444; color: #fff; }
+  .btn-ko:hover { opacity: 0.85; }
+  .btn-skip { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .study-progress { text-align: center; color: var(--muted); font-size: 0.82rem; margin-bottom: 18px; }
+  .study-score { font-weight: 700; color: var(--text); }
+  .keyboard-hint { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Flashcards Analyse II <span>— Liam Van Camp</span></h1>
+  <div class="stats">
+    <div>Total : <b id="stat-total">0</b></div>
+    <div>Maîtrisées : <b id="stat-ok" style="color:var(--deriv)">0</b></div>
+    <div>À revoir : <b id="stat-ko" style="color:#ef4444">0</b></div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button class="filter-btn active" data-cat="all">Toutes</button>
+  <button class="filter-btn" data-cat="trigo" style="color:var(--trigo)">Trigonométrie</button>
+  <button class="filter-btn" data-cat="deriv" style="color:#059669">Dérivées</button>
+  <button class="filter-btn" data-cat="integ" style="color:var(--integ)">Intégrales</button>
+  <button class="filter-btn" data-cat="edo"   style="color:var(--edo)">EDO</button>
+  <button class="filter-btn" data-cat="serie" style="color:var(--serie)">Séries</button>
+  <button class="filter-btn" data-cat="parcoeur" style="color:var(--parcoeur)">Par cœur</button>
+  <div class="sep"></div>
+  <button class="icon-btn active-mode" id="btn-mode-grid">⊞ Grille</button>
+  <button class="icon-btn" id="btn-mode-scroll">☰ Défilement</button>
+  <button class="icon-btn" id="btn-mode-qcm">✎ QCM</button>
+  <div class="toolbar-right">
+    <button class="icon-btn" id="btn-shuffle">🔀 Mélanger</button>
+    <button class="icon-btn" id="btn-unshuffle">↕ Ordre original</button>
+    <button class="icon-btn" id="btn-study">▶ Mode étude</button>
+    <button class="icon-btn" id="btn-reset">↺ Reset</button>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-label" id="progress-label">0 / 0 cartes maîtrisées</div>
+</div>
+
+<div id="qcm-score-bar" class="qcm-score-bar" style="display:none">QCM : <b id="qcm-correct">0</b> bonnes / <b id="qcm-answered">0</b> répondues</div>
+
+<div class="cards-grid" id="cards-grid"></div>
+<div class="cards-scroll" id="cards-scroll"></div>
+<div class="cards-qcm" id="cards-qcm"></div>
+
+<div class="modal-overlay" id="study-modal">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="study-progress" id="study-progress"></div>
+    <div class="modal-tag" id="modal-tag"></div>
+    <div class="study-question" id="study-question"></div>
+    <div class="study-answer" id="study-answer">
+      <div class="study-answer-text" id="study-answer-text"></div>
+    </div>
+    <div class="modal-nav" id="modal-nav">
+      <button class="nav-btn btn-reveal" id="btn-reveal">Voir la réponse</button>
+    </div>
+    <div class="keyboard-hint">Espace = révéler • → Maîtrisé • ← À revoir • Échap = fermer</div>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+// ── TRIGONOMÉTRIE ──────────────────────────────────
+{cat:'trigo', q:'Valeurs remarquables de sin(x)', hint:'x = 0, π/6, π/4, π/3, π/2',
+ a:`sin(0)  = 0\nsin(π/6) = 1/2\nsin(π/4) = √2/2\nsin(π/3) = √3/2\nsin(π/2) = 1`,
+ choices:['sin(π/4) = √2/2','sin(π/4) = 1/2','sin(π/6) = √3/2','sin(π/3) = 1/2']},
+
+{cat:'trigo', q:'Valeurs remarquables de cos(x)', hint:'x = 0, π/6, π/4, π/3, π/2',
+ a:`cos(0)  = 1\ncos(π/6) = √3/2\ncos(π/4) = √2/2\ncos(π/3) = 1/2\ncos(π/2) = 0`,
+ choices:['cos(π/3) = 1/2','cos(π/3) = √3/2','cos(π/4) = 1/2','cos(π/6) = 1/2']},
+
+{cat:'trigo', q:'Que vaut tan(x) ?',
+ a:'tan(x) = sin(x) / cos(x)',
+ choices:['sin(x) / cos(x)','cos(x) / sin(x)','1 / cos(x)','1 / sin(x)']},
+
+{cat:'trigo', q:'Que vaut cot(x) ?',
+ a:'cot(x) = cos(x) / sin(x) = 1/tan(x)',
+ choices:['cos(x) / sin(x)','sin(x) / cos(x)','1 / cos(x)','tan(x)']},
+
+{cat:'trigo', q:'Que vaut sec(x) ?',
+ a:'sec(x) = 1 / cos(x)',
+ choices:['1 / cos(x)','1 / sin(x)','cos(x) / sin(x)','sin(x) / cos(x)']},
+
+{cat:'trigo', q:'Identité fondamentale pythagore + corollaires',
+ a:`sin²(x) + cos²(x) = 1\n1 + tan²(x) = 1/cos²(x)\n1 + cot²(x) = 1/sin²(x)`,
+ choices:['sin²x + cos²x = 1','sin²x - cos²x = 1','cos²x + tan²x = 1','sin²x + tan²x = 1']},
+
+{cat:'trigo', q:'Parité de sin, cos, tan',
+ a:`sin  IMPAIRE : sin(-x) = -sin(x)\ncos  PAIRE    : cos(-x) =  cos(x)\ntan  IMPAIRE  : tan(-x) = -tan(x)`},
+
+{cat:'trigo', q:'Périodicité de sin, cos, tan',
+ a:`sin(x + 2π) = sin(x)  [période 2π]\ncos(x + 2π) = cos(x)  [période 2π]\ntan(x + π)  = tan(x)  [période  π]`,
+ choices:['tan a période π','tan a période 2π','sin a période π','cos a période π']},
+
+{cat:'trigo', q:'Formule sin(a ± b)',
+ a:`sin(a+b) = sin a cos b + cos a sin b\nsin(a-b) = sin a cos b - cos a sin b`,
+ choices:['sin(a+b) = sin a cos b + cos a sin b','sin(a+b) = sin a sin b + cos a cos b','sin(a+b) = cos a cos b - sin a sin b','sin(a+b) = sin a cos b - cos a sin b']},
+
+{cat:'trigo', q:'Formule cos(a ± b)',
+ a:`cos(a+b) = cos a cos b - sin a sin b\ncos(a-b) = cos a cos b + sin a sin b`,
+ choices:['cos(a+b) = cos a cos b - sin a sin b','cos(a+b) = cos a cos b + sin a sin b','cos(a+b) = sin a sin b - cos a cos b','cos(a+b) = sin a cos b + cos a sin b']},
+
+{cat:'trigo', q:'Formules de duplication',
+ a:`sin(2x) = 2 sin x cos x\ncos(2x) = cos²x - sin²x = 2cos²x-1 = 1-2sin²x\ntan(2x) = 2tan x/(1-tan²x)`},
+
+{cat:'trigo', q:'Linéarisation : cos²x et sin²x',
+ a:`cos²x = (1 + cos 2x) / 2\nsin²x = (1 - cos 2x) / 2`,
+ choices:['cos²x = (1+cos2x)/2 et sin²x = (1-cos2x)/2','cos²x = (1-cos2x)/2 et sin²x = (1+cos2x)/2','cos²x = cos²x/2 et sin²x = sin2x/2','cos²x = (1+sin2x)/2 et sin²x = (1-sin2x)/2']},
+
+{cat:'trigo', q:'Fonctions hyperboliques : définitions + identité',
+ a:`cosh x = (eˣ + e⁻ˣ) / 2  [paire]\nsinh x = (eˣ - e⁻ˣ) / 2  [impaire]\ntanh x = sinh x / cosh x\nIdentité : cosh²x - sinh²x = 1`},
+
+{cat:'trigo', q:'Valeurs et domaines de arcsin, arccos, arctan',
+ a:`arcsin : [-1,1] → [-π/2, π/2]\narccos : [-1,1] → [0, π]\narctan : ℝ → (-π/2, π/2)\narctan(0)=0, arctan(1)=π/4, arctan(±∞)=±π/2`},
+
+{cat:'trigo', q:'Limites classiques en 0',
+ a:`lim sin(x)/x     = 1     (x→0)\nlim (1-cosx)/x² = 1/2   (x→0)\nlim cos(x)       = 1     (x→0)`},
+
+// ── DÉRIVÉES ──────────────────────────────────────
+{cat:'deriv', q:'Dérivées : puissances et constante',
+ a:`(c)'  = 0\n(x)'  = 1\n(xⁿ)' = n xⁿ⁻¹\n(√x)' = 1/(2√x)`,
+ choices:['(xⁿ)\' = n·xⁿ⁻¹','(xⁿ)\' = xⁿ⁻¹','(xⁿ)\' = n·xⁿ','(√x)\' = 1/√x']},
+
+{cat:'deriv', q:'Dérivées : trig usuelles',
+ a:`(sin x)' =  cos x\n(cos x)' = -sin x\n(tan x)' =  1/cos²x\n(cot x)' = -1/sin²x`,
+ choices:['(cos x)\' = -sin x','(cos x)\' = sin x','(sin x)\' = -cos x','(tan x)\' = cos²x']},
+
+{cat:'deriv', q:'Dérivées : exp, ln',
+ a:`(eˣ)'    = eˣ\n(aˣ)'    = aˣ ln a\n(ln|x|)' = 1/x\n(logₐx)' = 1/(x ln a)`},
+
+{cat:'deriv', q:'Dérivées : circulaires inverses',
+ a:`(arcsin x)' =  1/√(1-x²)\n(arccos x)' = -1/√(1-x²)\n(arctan x)' =  1/(1+x²)\n(arccot x)' = -1/(1+x²)`,
+ choices:['(arctan x)\' = 1/(1+x²)','(arctan x)\' = 1/(1-x²)','(arcsin x)\' = -1/√(1-x²)','(arccos x)\' = 1/√(1-x²)']},
+
+{cat:'deriv', q:'Règles : produit, quotient, chaîne',
+ a:`Produit : (fg)' = f'g + fg'\nQuotient : (f/g)' = (f'g - fg') / g²\nChaîne   : (g∘f)'(x) = g'(f(x))·f'(x)`},
+
+{cat:'deriv', q:'Dérivée de : sin(x)', a:`(sin x)' = cos x`, choices:['cos x','-cos x','-sin x','1/cos²x']},
+{cat:'deriv', q:'Dérivée de : cos(x)', a:`(cos x)' = -sin x`, choices:['-sin x','sin x','-cos x','1/sin²x']},
+{cat:'deriv', q:'Dérivée de : tan(x)', a:`(tan x)' = 1/cos²x`, choices:['1/cos²x','1/sin²x','-1/cos²x','cos²x']},
+{cat:'deriv', q:'Dérivée de : eˣ', a:`(eˣ)' = eˣ`, choices:['eˣ','xeˣ⁻¹','eˣ ln e','1/eˣ']},
+{cat:'deriv', q:'Dérivée de : ln(x)', a:`(ln x)' = 1/x`, choices:['1/x','1/x²','ln x','x·ln x']},
+{cat:'deriv', q:'Dérivée de : arctan(x)', a:`(arctan x)' = 1/(1+x²)`, choices:['1/(1+x²)','-1/(1+x²)','1/√(1-x²)','-1/√(1-x²)']},
+{cat:'deriv', q:'Dérivée de : arcsin(x)', a:`(arcsin x)' = 1/√(1-x²)`, choices:['1/√(1-x²)','-1/√(1-x²)','1/(1+x²)','-1/(1-x²)']},
+{cat:'deriv', q:'Dérivée de : xⁿ', a:`(xⁿ)' = n·xⁿ⁻¹`, choices:['n·xⁿ⁻¹','xⁿ⁻¹','n·xⁿ','(n-1)·xⁿ']},
+
+// ── INTÉGRALES ────────────────────────────────────
+{cat:'integ', q:'Primitives de base',
+ a:`xⁿ       → xⁿ⁺¹/(n+1)\n1/x       → ln|x|\neˣ        → eˣ\nsin x     → -cos x\ncos x     →  sin x\ntan x     → -ln|cos x|\n1/(1+x²)  → arctan x\n1/√(1-x²) → arcsin x`},
+
+{cat:'integ', q:'Primitives composées à reconnaître',
+ a:`f'(x)/f(x)       → ln|f(x)|\nf(x)·f'(x)        → ½f(x)²\nf'(x)/(1+f²(x))   → arctan(f(x))\nf'(x)/√(1-f²(x))  → arcsin(f(x))`},
+
+{cat:'integ', q:'Changement de variable',
+ a:`u = φ(x), du = φ'(x)dx\n∫f(φ(x))φ'(x)dx = ∫f(u)du\n⚠ Changer les bornes !`},
+
+{cat:'integ', q:'Intégration par parties (IPP)',
+ a:`∫u dv = uv - ∫v du\nRègle LIATE : Log > Inverse > Algébrique > Trig > Exp`},
+
+{cat:'integ', q:'Primitive de : sin(x)', a:`∫sin x dx = -cos x + C`, choices:['-cos x + C','cos x + C','-sin x + C','sin x + C']},
+{cat:'integ', q:'Primitive de : cos(x)', a:`∫cos x dx = sin x + C`, choices:['sin x + C','-sin x + C','cos x + C','-cos x + C']},
+{cat:'integ', q:'Primitive de : tan(x)', a:`∫tan x dx = -ln|cos x| + C`, choices:['-ln|cos x| + C','ln|cos x| + C','-ln|sin x| + C','ln|sin x| + C']},
+{cat:'integ', q:'Primitive de : 1/x', a:`∫1/x dx = ln|x| + C`, choices:['ln|x| + C','1/x² + C','-1/x + C','x·ln x + C']},
+{cat:'integ', q:'Primitive de : eˣ', a:`∫eˣ dx = eˣ + C`, choices:['eˣ + C','xeˣ + C','eˣ/x + C','eˣ-1 + C']},
+{cat:'integ', q:'Primitive de : 1/(1+x²)', a:`∫1/(1+x²) dx = arctan x + C`, choices:['arctan x + C','arcsin x + C','-arctan x + C','ln(1+x²) + C']},
+{cat:'integ', q:'Primitive de : 1/√(1-x²)', a:`∫1/√(1-x²) dx = arcsin x + C`, choices:['arcsin x + C','arctan x + C','-arcsin x + C','arccos x + C']},
+{cat:'integ', q:'Primitive de : ln(x)', a:`∫ln x dx = x·ln x - x + C`, choices:['x·ln x - x + C','x·ln x + C','ln x / x + C','x²·ln x + C']},
+
+// ── EDO ───────────────────────────────────────────
+{cat:'edo', q:'ODE 1er ordre : définition + forme explicite',
+ a:`Forme générale : F(x, y, y') = 0\nForme explicite : y' = f(x, y)\n• "Ordinaire" = une seule variable\n• Ordre = degré de la dérivée la plus haute`},
+
+{cat:'edo', q:'Solution générale d\'une ODE du 1er ordre',
+ a:`Famille à 1 paramètre :\ny(x) = φ(x, C), C ∈ ℝ\n• Pour chaque C, y est solution\n• Chaque solution ↔ exactement un C\n• C = liberté d'intégration`,
+ choices:['Une famille à 1 paramètre y = φ(x,C)','Une solution unique','Une famille à 2 paramètres','Une constante fixe']},
+
+{cat:'edo', q:'Problème de Cauchy (IVP) — définition',
+ a:`{ F(x,y,y') = 0\n{ y(x₀) = y₀\nLa condition initiale sélectionne une solution unique.`,
+ choices:['ODE + condition initiale y(x₀)=y₀','ODE sans condition','ODE avec 2 conditions','Système de 2 ODE']},
+
+{cat:'edo', q:'Solution maximale — définition',
+ a:`y: I → ℝ est MAXIMALE si elle n'admet aucune extension.\nMaximal ≠ global sur ℝ.\nCauses d'arrêt :\n• Singularité\n• Blow-up (y → ∞)\n• Perte de régularité`,
+ choices:['Solution qu\'on ne peut plus prolonger','Solution définie sur ℝ entier','Solution avec C=0','Solution particulière d\'un IVP']},
+
+{cat:'edo', q:'Comment trouver l\'intervalle maximal',
+ a:`1. Trouver les zéros du dénominateur ou de l'expression sous racine\n2. Vérifier les limites en ±∞ et le signe au point initial\n3. L'intervalle maximal = entre les zéros de chaque côté de x₀\n4. Si pas de zéro d'un côté → borne = ±∞`},
+
+{cat:'edo', q:'EDO séparable : forme + méthode',
+ a:`Forme : y'·h(y) = g(x)\nStep 1 : séparer → h(y)dy = g(x)dx\nStep 2 : intégrer → H(y) = G(x) + C  [implicite]\nStep 3 : isoler y = H⁻¹(G(x)+C)       [explicite]\nStep 4 : vérifier domaine`,
+ choices:['y\'·h(y) = g(x) → séparer et intégrer','y\' + a(x)y = b(x)','y\' = F(y/x)','y\' = p(x)y + q(x)yⁿ']},
+
+{cat:'edo', q:'Détecter une EDO linéaire du 1er ordre',
+ a:`Forme standard : y'(x) + a(x)·y(x) = b(x)\n• y et y' au degré 1 seulement\n• a(x) et b(x) ne dépendent que de x\n• Pas de y², sin(y), etc.`,
+ choices:['y\' + a(x)y = b(x) avec y et y\' au degré 1','y\'·h(y) = g(x)','y\' = F(y/x)','y\' = p(x)y + q(x)yⁿ']},
+
+{cat:'edo', q:'Solution générale ODE linéaire 1er ordre',
+ a:`y(x) = y_hom + y_p\ny_hom = C·e^{-A(x)}\ny_p = e^{-A(x)} ∫ e^{A(x)} b(x) dx\noù A(x) = ∫a(x)dx`,
+ choices:['y = Ce^{-A(x)} + e^{-A(x)}∫e^{A(x)}b(x)dx','y = Ce^{A(x)} + ∫b(x)dx','y = e^{A(x)}(C + ∫b(x)dx)','y = C/e^{A(x)} + b(x)']},
+
+{cat:'edo', q:'IVP linéaire 1er ordre : formule directe',
+ a:`y(x) = y₀·e^{A(x₀)-A(x)} + e^{-A(x)} ∫_{x₀}^x e^{A(s)} b(s) ds\nC est remplacé directement par y₀·e^{A(x₀)}`,
+ choices:['y₀·e^{A(x₀)-A(x)} + e^{-A(x)}∫_{x₀}^x e^{A(s)}b(s)ds','y₀ + ∫_{x₀}^x b(s)ds','Ce^{-A(x)} + ∫b(x)dx','y₀·e^{-A(x)} + ∫b(x)dx']},
+
+{cat:'edo', q:'Détecter une EDO d\'Euler homogène',
+ a:`Forme : y' = F(y/x)\nIndices :\n• Num et dén homogènes de même degré\n• Remplace x→λx, y→λy : λ disparaît\n• Diviser par xⁿ fait apparaître y/x`,
+ choices:['Num et dén homogènes de même degré → y\'=F(y/x)','y\' + a(x)y = 0','y\'·h(y) = g(x)','y\' = p(x)y + q(x)yⁿ']},
+
+{cat:'edo', q:'Degré d\'homogénéité d\'un terme',
+ a:`Degré = somme des exposants de x et y\nExemples :\n• x² → degré 2\n• xy → degré 2 (1+1)\n• x²y → degré 3 (2+1)\n• x/y → degré 0 (1-1)`,
+ choices:['Somme des exposants de x et y','Exposant de x seulement','Exposant de y seulement','Produit des exposants']},
+
+{cat:'edo', q:'Substitution Euler : marche à suivre',
+ a:`1. Vérifier y' = F(y/x)\n2. Poser y = xz  (z = y/x)\n3. Dériver : y' = z + xz'\n4. Substituer : z + xz' = F(z)\n5. Isoler : xz' = F(z) - z\n6. Séparer : dz/(F(z)-z) = dx/x\n7. Intégrer\n8. Revenir à y : z = y/x`,
+ choices:['Poser y=xz → y\'=z+xz\' → équation séparable en z','Poser z=x/y','Poser u=x+y','Poser v=y\'']},
+
+{cat:'edo', q:'∫ cot(x) dx = ?',
+ a:`∫ cot x dx = ∫ cos x/sin x dx = ln|sin x| + C\n(forme f\'/f avec f = sin x)`,
+ choices:['ln|sin x| + C','-ln|sin x| + C','ln|cos x| + C','-ln|cos x| + C']},
+
+{cat:'edo', q:'EDO linéaire : comment trouver A(x)',
+ a:`A(x) = ∫ a(x) dx\nExemples :\n• a(x) = 1/x   → A(x) = ln x\n• a(x) = -1/(3x) → A(x) = -1/3 ln x\n• a(x) = 2x     → A(x) = x²\n⚠ Ne pas confondre -1/(3x) et -3/x`,
+ choices:['A(x) = ∫a(x)dx, la primitive de a','A(x) = a(x)·x','A(x) = e^{a(x)}','A(x) = 1/a(x)']},
+
+{cat:'edo', q:'Équation de Bernoulli',
+ a:`Forme : y' + a(x)y = b(x)·yⁿ  (n≥2)\nSubstitution : v = y^{1-n}\nv' + (1-n)a(x)v = (1-n)b(x)\n→ Devient linéaire en v`,
+ choices:['y\' + a(x)y = b(x)yⁿ → substituer v=y^{1-n}','y\' + a(x)y = b(x) → intégrer directement','y\'=F(y/x) → poser y=xz','y\'h(y)=g(x) → séparer']},
+
+{cat:'edo', q:'ODE 2nd ordre : coefficients constants, cas selon Δ',
+ a:`y'' + py' + qy = 0,  r² + pr + q = 0\nΔ > 0 : y = C₁e^{r₁x} + C₂e^{r₂x}\nΔ = 0 : y = (C₁+C₂x)e^{rx}\nΔ < 0 : r=α±iβ → y = e^{αx}(C₁cosβx + C₂sinβx)`,
+ choices:['3 cas selon Δ=p²-4q : réels distincts, double, complexes','1 seul cas : toujours réels','Δ<0 → pas de solution','Δ=0 → C₁e^{r₁x}+C₂e^{r₂x}']},
+
+
+{cat:'edo', q:'Ansatz y_p : g(x) = polynôme de degré n',
+ a:`c ≠ 0 → p(x) = polynôme de degré n\nc = 0, b ≠ 0 → degré n+1\nb = c = 0 → degré n+2\nSubstituer et identifier les coefficients`,
+ choices:['deg n si c≠0 / n+1 si c=0,b≠0 / n+2 si b=c=0','toujours degré n','toujours degré n+1','degré n-1 si c≠0']},
+
+{cat:'edo', q:'Ansatz y_p : g(x) = λe^{κx}',
+ a:`p(x) = αe^{κx}          (cas standard)\np(x) = αxe^{κx}         (si κ racine simple)\np(x) = αx²e^{κx}        (si κ racine double)\n→ toujours multiplier par x si l'ansatz est déjà solution homogène`,
+ choices:['αe^{κx}, ou ×x si κ racine simple, ou ×x² si double','toujours αe^{κx}','αxe^{κx} systématiquement','αe^{-κx}']},
+
+{cat:'edo', q:'Ansatz y_p : g(x) = λsin(ωx) ou λcos(ωx)',
+ a:`p(x) = α·sin(ωx) + β·cos(ωx)\n(toujours les deux termes même si g n'a qu'un seul)\nSubstituer p, p', p'' dans l'ODE\nIdentifier coef sin et coef cos → système 2×2 en α,β`,
+ choices:['α·sin(ωx) + β·cos(ωx) toujours','α·sin(ωx) seulement','α·cos(ωx) seulement','α·sin(ωx) + β·cos(ωx) seulement si g a les deux']},
+
+{cat:'edo', q:'Ansatz y_p : g(x) = e^{κx}(λsin(ωx) + μcos(ωx))',
+ a:`p(x) = e^{κx}(α·sin(ωx) + β·cos(ωx))          (cas standard)\np(x) = xe^{κx}(α·sin(ωx) + β·cos(ωx))         (si κ±iω racine)\nMultiplier par x si l'ansatz est déjà solution homogène`,
+ choices:['e^{κx}(α·sin+β·cos), ou ×x si κ±iω racine','toujours xe^{κx}(α·sin+β·cos)','e^{κx}·α·sin(ωx) seulement','e^{-κx}(α·sin+β·cos)']},
+
+{cat:'edo', q:'Méthode ansatz step by step',
+ a:`1. Identifier la forme de g(x) → choisir l'ansatz p(x)\n2. Calculer p'(x) et p''(x)\n3. Substituer dans ay''+by'+cy = g(x)\n4. Regrouper par famille (sin, cos, e^x, x^n...)\n5. Identifier les coefficients → système en α,β,...\n6. Résoudre → y_p trouvé\ny_gen = y_hom + y_p`,
+ choices:['ansatz → dériver → substituer → identifier coef → résoudre','résoudre homogène seulement','variation des constantes','substitution v=y/x']},
+
+{cat:'edo', q:'Quand utiliser ansatz vs variation des constantes ?',
+ a:`Ansatz : g(x) polynôme / exp / sin / cos / combinaison → RAPIDE\nVariation des constantes : toujours valide, mais calcul lourd\n→ Préférer ansatz quand g(x) est une forme standard`,
+ choices:['Ansatz si g standard (poly/exp/sin/cos), variation sinon','Toujours variation des constantes','Toujours ansatz','Ansatz si coef variables']},
+
+{cat:'edo', q:'Wronskien W(y₁, y₂)',
+ a:`W(y₁,y₂)(x) = y₁y₂′ - y₁′y₂\nW ≠ 0 ⟺ y₁, y₂ linéairement indépendantes`},
+
+// ═══════════════ PAR CŒUR (doc 5) ═══════════════
+{cat:'parcoeur', q:'Valeurs remarquables sin / cos / tan', hint:'x = 0, π/6, π/4, π/3, π/2',
+ a:`sin : 0,  1/2,  √2/2,  √3/2,  1\ncos : 1,  √3/2,  √2/2,  1/2,  0\ntan : 0,  √3/3,  1,  √3,  ∞`,
+ choices:['tan(π/4)=1 et cos(π/6)=√3/2','sin(π/6)=√3/2','cos(π/4)=1/2','tan(π/3)=1']},
+
+{cat:'parcoeur', q:'Identités trigonométriques fondamentales',
+ a:`sin²x + cos²x = 1\n1 + tan²x = 1/cos²x\ntan x = sin x / cos x`,
+ choices:['sin²x + cos²x = 1','sin²x - cos²x = 1','sin²x + cos²x = 2','1 + tan²x = sin²x']},
+
+{cat:'parcoeur', q:'Formules d addition (somme / différence)',
+ a:`sin(a±b) = sin a cos b ± cos a sin b\ncos(a±b) = cos a cos b ∓ sin a sin b`,
+ choices:['cos(a+b) = cos a cos b - sin a sin b','cos(a+b) = cos a cos b + sin a sin b','sin(a+b) = sin a sin b + cos a cos b','cos(a-b) = cos a cos b - sin a sin b']},
+
+{cat:'parcoeur', q:'Angle double et linéarisation',
+ a:`sin 2x = 2 sin x cos x\ncos 2x = 2cos²x - 1 = 1 - 2sin²x\ncos²x = (1 + cos 2x)/2\nsin²x = (1 - cos 2x)/2`,
+ choices:['cos²x = (1 + cos 2x)/2','cos²x = (1 - cos 2x)/2','sin²x = (1 + cos 2x)/2','cos 2x = 2 sin x cos x']},
+
+{cat:'parcoeur', q:'Règles des puissances et racines',
+ a:`aᵐaⁿ = aᵐ⁺ⁿ ;  aᵐ/aⁿ = aᵐ⁻ⁿ ;  (aᵐ)ⁿ = aᵐⁿ\n(ab)ⁿ = aⁿbⁿ ;  a⁻ⁿ = 1/aⁿ ;  a^(1/n) = ⁿ√a`,
+ choices:['(aᵐ)ⁿ = aᵐⁿ','(aᵐ)ⁿ = aᵐ⁺ⁿ','aᵐaⁿ = aᵐⁿ','(ab)ⁿ = aⁿ + bⁿ']},
+
+{cat:'parcoeur', q:'Valeur absolue : propriétés',
+ a:`|x| = √(x²) ≥ 0 ;  |xy| = |x||y|\n|x| < a ⟺ -a < x < a\n|x+y| ≤ |x| + |y|   (inégalité triangulaire)`,
+ choices:['|x| < a ⟺ -a < x < a','|x| < a ⟺ x < a','|x+y| = |x| + |y|','|xy| = |x| + |y|']},
+
+{cat:'parcoeur', q:'Règles de l exponentielle',
+ a:`e^(x+y) = eˣeʸ ;  e^(x-y) = eˣ/eʸ\n(eˣ)ⁿ = e^(nx) ;  e⁰ = 1 ;  e^(ln a) = a`,
+ choices:['e^(x+y) = eˣeʸ','e^(x+y) = eˣ + eʸ','e^(xy) = eˣeʸ','(eˣ)ⁿ = eˣ⁺ⁿ']},
+
+{cat:'parcoeur', q:'Règles du logarithme',
+ a:`ln(ab) = ln a + ln b\nln(a/b) = ln a - ln b\nln(aⁿ) = n ln a ;  ln 1 = 0 ;  ln e = 1\naˣ = e^(x ln a)`,
+ choices:['ln(ab) = ln a + ln b','ln(ab) = ln a · ln b','ln(a+b) = ln a + ln b','ln(aⁿ) = (ln a)ⁿ']},
+
+{cat:'parcoeur', q:'Sommes à connaître',
+ a:`Σ_{k=1}^n 1 = n\nΣ_{k=1}^n k = n(n+1)/2\nΣ_{k=1}^n k² = n(n+1)(2n+1)/6\nΣ_{k=0}^n qᵏ = (1 - q^(n+1))/(1 - q)`,
+ choices:['Σ k = n(n+1)/2','Σ k = n²','Σ k = n(n+1)','Σ k² = n(n+1)/2']},
+
+{cat:'parcoeur', q:'Binôme de Newton et identité de Pascal',
+ a:`(a+b)ⁿ = Σ_{k=0}^n C(n,k) aᵏ b^(n-k)\nPascal : C(n,k) = C(n-1,k-1) + C(n-1,k)`,
+ choices:['(a+b)ⁿ = Σ C(n,k) aᵏ b^(n-k)','(a+b)ⁿ = aⁿ + bⁿ','C(n,k) = C(n-1,k)·C(n-1,k-1)','(a+b)ⁿ = Σ aᵏ bᵏ']},
+
+{cat:'parcoeur', q:'Suite géométrique : limite de qⁿ',
+ a:`qⁿ → 0    si |q| < 1\nqⁿ → 1    si q = 1\nqⁿ → +∞   si q > 1\ndiverge   si q ≤ -1`,
+ choices:['qⁿ → 0 si |q| < 1','qⁿ → 0 si q > 1','qⁿ → ∞ si |q| < 1','qⁿ → 1 si |q| < 1']},
+
+{cat:'parcoeur', q:'Limites de suites usuelles',
+ a:`1/nᵖ → 0 (p>0) ;  ⁿ√n → 1\n(1 + x/n)ⁿ → eˣ\nln n / n → 0 ;  nᵏ/qⁿ → 0 (q>1) ;  qⁿ/n! → 0`,
+ choices:['(1 + x/n)ⁿ → eˣ','(1 + x/n)ⁿ → 1','ⁿ√n → 0','nᵏ/qⁿ → ∞']},
+
+{cat:'parcoeur', q:'Hiérarchie des infinis',
+ a:`ln n  ≪  nᵖ  ≪  qⁿ  ≪  n!  ≪  nⁿ      (p>0, q>1)`,
+ choices:['ln n ≪ nᵖ ≪ qⁿ ≪ n! ≪ nⁿ','qⁿ ≪ nᵖ ≪ ln n','n! ≪ qⁿ ≪ nᵖ','nⁿ ≪ n! ≪ qⁿ']},
+
+{cat:'parcoeur', q:'Séries de référence',
+ a:`Géométrique : Σ qᵏ = 1/(1-q) si |q|<1\nRiemann : Σ 1/kᵖ converge ⟺ p > 1\nHarmonique : Σ 1/k DIVERGE\nHarm. alternée : Σ (-1)^(k-1)/k = ln 2`,
+ choices:['Σ 1/kᵖ converge ⟺ p > 1','Σ 1/kᵖ converge ⟺ p < 1','Σ 1/k converge','Σ qᵏ = 1/(1-q) toujours']},
+
+{cat:'parcoeur', q:'Critères de convergence des séries',
+ a:`Nécessaire : si aₖ ↛ 0 → diverge\nd Alembert : q = lim|aₖ₊₁/aₖ| ; q<1 conv, q>1 div\nCauchy (racine) : q = lim ᵏ√|aₖ| ; idem\nLeibniz : aₖ ↓ → 0 ⟹ Σ(-1)ᵏaₖ converge`,
+ choices:['q = lim|aₖ₊₁/aₖ| < 1 ⟹ converge','q = lim|aₖ₊₁/aₖ| < 1 ⟹ diverge','aₖ → 0 ⟹ converge','q = 1 ⟹ converge']},
+
+{cat:'parcoeur', q:'Formule de Taylor (ordre n)',
+ a:`f(x) = Σ_{k=0}^n f⁽ᵏ⁾(a)/k! (x-a)ᵏ + reste\nDL ordre 1 ⟺ dérivable\nTangente : y = f(a) + f′(a)(x-a)`,
+ choices:['DL ordre 1 ⟺ dérivable','DL ordre 0 ⟺ dérivable','tangente : y = f(a) + f″(a)(x-a)','Taylor n a pas de reste']},
+
+{cat:'parcoeur', q:'Série / DL de eˣ',
+ a:`eˣ = 1 + x + x²/2! + x³/3! + ... = Σ xᵏ/k!     (x ∈ ℝ)`,
+ choices:['eˣ = Σ xᵏ/k!','eˣ = Σ xᵏ','eˣ = Σ (-1)ᵏ xᵏ/k!','eˣ = Σ x^(2k)/(2k)!']},
+
+{cat:'parcoeur', q:'DL de sin x et cos x',
+ a:`sin x = x - x³/3! + x⁵/5! - ... = Σ (-1)ᵏ x^(2k+1)/(2k+1)!\ncos x = 1 - x²/2! + x⁴/4! - ... = Σ (-1)ᵏ x^(2k)/(2k)!`,
+ choices:['sin x = x - x³/3! + x⁵/5! - ...','sin x = 1 - x²/2! + ...','sin x = x + x³/3! + ...','sin x = x - x²/2 + ...']},
+
+{cat:'parcoeur', q:'DL de ln(1+x) et 1/(1-x)',
+ a:`ln(1+x) = x - x²/2 + x³/3 - ...   (x ∈ (-1,1])\n1/(1-x) = 1 + x + x² + ...   (|x| < 1)`,
+ choices:['ln(1+x) = x - x²/2 + x³/3 - ...','ln(1+x) = x + x²/2 + x³/3 + ...','ln(1+x) = 1 - x + x² - ...','1/(1-x) = 1 - x + x² - ...']},
+
+{cat:'parcoeur', q:'DL de (1+x)^α et arctan x',
+ a:`(1+x)^α = 1 + αx + α(α-1)/2! x² + ...\narctan x = x - x³/3 + x⁵/5 - ...`,
+ choices:['(1+x)^α = 1 + αx + α(α-1)/2! x² + ...','(1+x)^α = 1 + αx + α² x² + ...','arctan x = x + x³/3 + ...','arctan x = 1 - x²/2 + ...']},
+
+{cat:'parcoeur', q:'Règles de dérivation',
+ a:`(αf + βg)′ = αf′ + βg′\n(fg)′ = f′g + fg′\n(f/g)′ = (f′g - fg′)/g²\n(f∘g)′ = f′(g) · g′   (chaîne)`,
+ choices:['(f/g)′ = (f′g - fg′)/g²','(f/g)′ = (f′g + fg′)/g²','(fg)′ = f′g′','(f∘g)′ = f′ · g']},
+
+{cat:'parcoeur', q:'Dérivées usuelles (1/2)',
+ a:`(xᵖ)′ = p x^(p-1)\n(eˣ)′ = eˣ ;  (aˣ)′ = aˣ ln a\n(ln|x|)′ = 1/x\n(sin x)′ = cos x ;  (cos x)′ = -sin x`,
+ choices:['(ln|x|)′ = 1/x','(ln|x|)′ = 1/x²','(cos x)′ = sin x','(aˣ)′ = x a^(x-1)']},
+
+{cat:'parcoeur', q:'Dérivées usuelles (2/2)',
+ a:`(tan x)′ = 1/cos²x = 1 + tan²x\n(arctan x)′ = 1/(1+x²)\n(arcsin x)′ = 1/√(1-x²)\n(sinh x)′ = cosh x ;  (cosh x)′ = sinh x`,
+ choices:['(arctan x)′ = 1/(1+x²)','(arctan x)′ = 1/√(1-x²)','(arcsin x)′ = 1/(1+x²)','(tan x)′ = 1/sin²x']},
+
+{cat:'parcoeur', q:'Primitives usuelles (1/2)',
+ a:`∫ xⁿ dx = x^(n+1)/(n+1)  (n≠-1)\n∫ 1/x dx = ln|x|\n∫ eˣ dx = eˣ\n∫ cos x dx = sin x ;  ∫ sin x dx = -cos x`,
+ choices:['∫ 1/x dx = ln|x|','∫ 1/x dx = -1/x²','∫ sin x dx = cos x','∫ xⁿ dx = x^(n-1)']},
+
+{cat:'parcoeur', q:'Primitives usuelles (2/2)',
+ a:`∫ 1/(1+x²) dx = arctan x\n∫ 1/√(1-x²) dx = arcsin x\n∫ tan x dx = -ln|cos x|\n∫ cot x dx = ln|sin x|`,
+ choices:['∫ 1/(1+x²) dx = arctan x','∫ 1/(1+x²) dx = arcsin x','∫ tan x dx = ln|cos x|','∫ 1/√(1-x²) dx = arctan x']},
+
+{cat:'parcoeur', q:'Intégrales à reconnaître (formes en f′)',
+ a:`∫ f′f dx = f²/2\n∫ f′/f dx = ln|f|\n∫ f′/(1+f²) dx = arctan(f)\n∫ 1/(x²+a²) dx = (1/a) arctan(x/a)`,
+ choices:['∫ f′/f dx = ln|f|','∫ f′/f dx = f²/2','∫ f′f dx = ln|f|','∫ 1/(x²+a²) dx = arctan(x)']},
+
+{cat:'parcoeur', q:'Méthodes d intégration',
+ a:`Changement de variable : ∫ f(φ)φ′ dx = ∫ f(u) du\nIPP : ∫ u dv = uv - ∫ v du   (choix de u : LIATE)\nRéflexe : ∫ φ′/φ dx = ln|φ|`,
+ choices:['∫ u dv = uv - ∫ v du','∫ u dv = uv + ∫ v du','∫ u dv = u′v - ∫ v du','∫ f(φ)φ′ dx = f(u)']},
+
+// ═══ couverture étendue (trigo / dérivées / intégrales / séries) ═══
+{cat:'trigo', q:'sin(π − x) = ?', a:`sin(π − x) = sin x`, choices:['sin x','−sin x','cos x','−cos x']},
+{cat:'trigo', q:'cos(π − x) = ?', a:`cos(π − x) = −cos x`, choices:['−cos x','cos x','sin x','−sin x']},
+{cat:'trigo', q:'sin(π + x) = ?', a:`sin(π + x) = −sin x`, choices:['−sin x','sin x','−cos x','cos x']},
+{cat:'trigo', q:'cos(π + x) = ?', a:`cos(π + x) = −cos x`, choices:['−cos x','cos x','−sin x','sin x']},
+{cat:'trigo', q:'tan(π + x) = ?', a:`tan(π + x) = tan x   (période π)`, choices:['tan x','−tan x','cot x','−cot x']},
+{cat:'trigo', q:'sin(π/2 − x) = ?', a:`sin(π/2 − x) = cos x`, choices:['cos x','sin x','−cos x','−sin x']},
+{cat:'trigo', q:'cos(π/2 − x) = ?', a:`cos(π/2 − x) = sin x`, choices:['sin x','cos x','−sin x','−cos x']},
+{cat:'trigo', q:'sin(π/2 + x) = ?', a:`sin(π/2 + x) = cos x`, choices:['cos x','−cos x','sin x','−sin x']},
+{cat:'trigo', q:'cos(π/2 + x) = ?', a:`cos(π/2 + x) = −sin x`, choices:['−sin x','sin x','cos x','−cos x']},
+{cat:'trigo', q:'Parité de sin, cos, tan', a:`sin impaire, cos paire, tan impaire`, choices:['sin impaire, cos paire, tan impaire','sin paire, cos impaire, tan paire','toutes paires','toutes impaires']},
+{cat:'trigo', q:'Périodicité de sin, cos, tan', a:`sin et cos : 2π ;  tan : π`, choices:['sin,cos : 2π et tan : π','toutes : 2π','toutes : π','sin,cos : π et tan : 2π']},
+{cat:'trigo', q:'Formule sin(2x)', a:`sin(2x) = 2 sin x cos x`, choices:['2 sin x cos x','sin²x − cos²x','2 cos²x − 1','sin x cos x']},
+{cat:'trigo', q:'Formule cos(2x)', a:`cos(2x) = cos²x − sin²x = 2cos²x − 1 = 1 − 2sin²x`, choices:['cos²x − sin²x','cos²x + sin²x','2 sin x cos x','sin²x − cos²x']},
+{cat:'trigo', q:'Formule tan(2x)', a:`tan(2x) = 2 tan x / (1 − tan²x)`, choices:['2 tan x/(1 − tan²x)','2 tan x/(1 + tan²x)','tan²x/(1 − tan x)','2 tan x']},
+{cat:'trigo', q:'Linéarisation de cos²x', a:`cos²x = (1 + cos 2x)/2`, choices:['(1 + cos 2x)/2','(1 − cos 2x)/2','(1 + sin 2x)/2','cos 2x/2']},
+{cat:'trigo', q:'Linéarisation de sin²x', a:`sin²x = (1 − cos 2x)/2`, choices:['(1 − cos 2x)/2','(1 + cos 2x)/2','(1 − sin 2x)/2','sin 2x/2']},
+{cat:'trigo', q:'Produit → somme : sin a cos b', a:`sin a cos b = ½[sin(a+b) + sin(a−b)]`, choices:['½[sin(a+b) + sin(a−b)]','½[sin(a+b) − sin(a−b)]','½[cos(a+b) + cos(a−b)]','sin(a+b)']},
+{cat:'trigo', q:'Produit → somme : cos a cos b', a:`cos a cos b = ½[cos(a+b) + cos(a−b)]`, choices:['½[cos(a+b) + cos(a−b)]','½[cos(a−b) − cos(a+b)]','½[sin(a+b) + sin(a−b)]','cos(a+b)']},
+{cat:'trigo', q:'Produit → somme : sin a sin b', a:`sin a sin b = ½[cos(a−b) − cos(a+b)]`, choices:['½[cos(a−b) − cos(a+b)]','½[cos(a+b) + cos(a−b)]','½[sin(a+b) − sin(a−b)]','cos(a−b)']},
+{cat:'trigo', q:'Définition de cosh x', a:`cosh x = (eˣ + e⁻ˣ)/2   (paire)`, choices:['(eˣ + e⁻ˣ)/2','(eˣ − e⁻ˣ)/2','(eˣ + e⁻ˣ)','(e⁻ˣ − eˣ)/2']},
+{cat:'trigo', q:'Définition de sinh x', a:`sinh x = (eˣ − e⁻ˣ)/2   (impaire)`, choices:['(eˣ − e⁻ˣ)/2','(eˣ + e⁻ˣ)/2','(e⁻ˣ − eˣ)/2','(eˣ − e⁻ˣ)']},
+{cat:'trigo', q:'Identité hyperbolique', a:`cosh²x − sinh²x = 1`, choices:['cosh²x − sinh²x = 1','cosh²x + sinh²x = 1','sinh²x − cosh²x = 1','cosh²x − sinh²x = −1']},
+{cat:'trigo', q:'Définition de tanh x', a:`tanh x = sinh x / cosh x`, choices:['sinh x / cosh x','cosh x / sinh x','1/cosh x','sinh x · cosh x']},
+{cat:'trigo', q:'Domaine/image de arcsin', a:`arcsin : [−1,1] → [−π/2, π/2]`, choices:['[−1,1] → [−π/2, π/2]','[−1,1] → [0, π]','ℝ → [−π/2, π/2]','[0,1] → [0, π/2]']},
+{cat:'trigo', q:'Domaine/image de arccos', a:`arccos : [−1,1] → [0, π]`, choices:['[−1,1] → [0, π]','[−1,1] → [−π/2, π/2]','ℝ → [0, π]','[−1,1] → [0, π/2]']},
+{cat:'trigo', q:'Domaine/image de arctan', a:`arctan : ℝ → (−π/2, π/2)`, choices:['ℝ → (−π/2, π/2)','[−1,1] → (−π/2, π/2)','ℝ → (0, π)','ℝ → [−π/2, π/2]']},
+{cat:'trigo', q:'Limite lim(x→0) sin x / x', a:`lim(x→0) sin x / x = 1`, choices:['1','0','∞','1/2']},
+{cat:'trigo', q:'Limite lim(x→0) (1 − cos x)/x²', a:`lim(x→0) (1 − cos x)/x² = 1/2`, choices:['1/2','1','0','2']},
+{cat:'trigo', q:'Limite lim(x→0) tan x / x', a:`lim(x→0) tan x / x = 1`, choices:['1','0','∞','1/2']},
+{cat:'trigo', q:'Demi-angle : sin²(x/2)', a:`sin²(x/2) = (1 − cos x)/2`, choices:['(1 − cos x)/2','(1 + cos x)/2','(1 − cos x)','cos x/2']},
+{cat:'deriv', q:'Dérivée de xⁿ', a:`(xⁿ)′ = n x^(n−1)`, choices:['n x^(n−1)','x^(n−1)','n x^(n+1)','(n−1) xⁿ']},
+{cat:'deriv', q:'Dérivée de √x', a:`(√x)′ = 1/(2√x)`, choices:['1/(2√x)','1/√x','2√x','−1/(2√x)']},
+{cat:'deriv', q:'Dérivée de 1/x', a:`(1/x)′ = −1/x²`, choices:['−1/x²','1/x²','−1/x','ln|x|']},
+{cat:'deriv', q:'Dérivée de eˣ', a:`(eˣ)′ = eˣ`, choices:['eˣ','x eˣ','e^(x−1)','1/eˣ']},
+{cat:'deriv', q:'Dérivée de aˣ', a:`(aˣ)′ = aˣ ln a`, choices:['aˣ ln a','aˣ','x a^(x−1)','aˣ/ln a']},
+{cat:'deriv', q:'Dérivée de ln x', a:`(ln x)′ = 1/x`, choices:['1/x','1/x²','ln x','x']},
+{cat:'deriv', q:'Dérivée de log_a x', a:`(log_a x)′ = 1/(x ln a)`, choices:['1/(x ln a)','1/x','ln a / x','1/(x log a)']},
+{cat:'deriv', q:'Dérivée de sin x', a:`(sin x)′ = cos x`, choices:['cos x','−cos x','−sin x','sin x']},
+{cat:'deriv', q:'Dérivée de cos x', a:`(cos x)′ = −sin x`, choices:['−sin x','sin x','cos x','−cos x']},
+{cat:'deriv', q:'Dérivée de tan x', a:`(tan x)′ = 1/cos²x = 1 + tan²x`, choices:['1/cos²x = 1 + tan²x','1/sin²x','−1/cos²x','1 + cot²x']},
+{cat:'deriv', q:'Dérivée de cot x', a:`(cot x)′ = −1/sin²x`, choices:['−1/sin²x','1/sin²x','1/cos²x','−1/cos²x']},
+{cat:'deriv', q:'Dérivée de arcsin x', a:`(arcsin x)′ = 1/√(1 − x²)`, choices:['1/√(1 − x²)','−1/√(1 − x²)','1/(1 + x²)','1/√(x² − 1)']},
+{cat:'deriv', q:'Dérivée de arccos x', a:`(arccos x)′ = −1/√(1 − x²)`, choices:['−1/√(1 − x²)','1/√(1 − x²)','−1/(1 + x²)','1/√(x² − 1)']},
+{cat:'deriv', q:'Dérivée de arctan x', a:`(arctan x)′ = 1/(1 + x²)`, choices:['1/(1 + x²)','1/√(1 − x²)','−1/(1 + x²)','1/(1 − x²)']},
+{cat:'deriv', q:'Dérivée de sinh x', a:`(sinh x)′ = cosh x`, choices:['cosh x','−cosh x','sinh x','−sinh x']},
+{cat:'deriv', q:'Dérivée de cosh x', a:`(cosh x)′ = sinh x`, choices:['sinh x','−sinh x','cosh x','−cosh x']},
+{cat:'deriv', q:'Dérivée de tanh x', a:`(tanh x)′ = 1/cosh²x = 1 − tanh²x`, choices:['1/cosh²x = 1 − tanh²x','1/cosh²x = 1 + tanh²x','−1/cosh²x','1/sinh²x']},
+{cat:'deriv', q:'Dérivée de |x| (x≠0)', a:`(|x|)′ = x/|x| = sgn x`, choices:['x/|x| = sgn x','1','−1','|x|']},
+{cat:'deriv', q:'Règle du produit', a:`(fg)′ = f′g + fg′`, choices:['f′g + fg′','f′g′','f′g − fg′','fg′ − f′g']},
+{cat:'deriv', q:'Règle du quotient', a:`(f/g)′ = (f′g − fg′)/g²`, choices:['(f′g − fg′)/g²','(f′g + fg′)/g²','(fg′ − f′g)/g²','(f′g − fg′)/g']},
+{cat:'deriv', q:'Règle de la chaîne', a:`(f∘g)′ = f′(g) · g′`, choices:['f′(g) · g′','f′(g′)','f′ · g′','f′(g) + g′']},
+{cat:'deriv', q:'Linéarité de la dérivée', a:`(αf + βg)′ = αf′ + βg′`, choices:['αf′ + βg′','αβ(f′ + g′)','αf′ · βg′','α f + β g']},
+{cat:'deriv', q:'Dérivée logarithmique de u^v', a:`(u^v)′ = u^v (v′ ln u + v u′/u)`, choices:['u^v (v′ ln u + v u′/u)','u^v · v′','v u^(v−1)','u^v ln u']},
+{cat:'deriv', q:'nᵉ dérivée de eˣ', a:`(eˣ)⁽ⁿ⁾ = eˣ`, choices:['eˣ','n eˣ','e^(nx)','x eˣ']},
+{cat:'deriv', q:'nᵉ dérivée de ln x', a:`(ln x)⁽ⁿ⁾ = (−1)^(n−1) (n−1)! / xⁿ`, choices:['(−1)^(n−1)(n−1)!/xⁿ','(−1)ⁿ n!/xⁿ','(n−1)!/xⁿ','1/xⁿ']},
+{cat:'deriv', q:'nᵉ dérivée de 1/x', a:`(1/x)⁽ⁿ⁾ = (−1)ⁿ n! / x^(n+1)`, choices:['(−1)ⁿ n!/x^(n+1)','(−1)^(n−1)(n−1)!/xⁿ','n!/xⁿ','(−1)ⁿ/x^(n+1)']},
+{cat:'deriv', q:'nᵉ dérivée de sin x', a:`(sin x)⁽ⁿ⁾ = sin(x + nπ/2)`, choices:['sin(x + nπ/2)','cos(x + nπ/2)','sin(nx)','(−1)ⁿ sin x']},
+{cat:'deriv', q:'nᵉ dérivée de cos x', a:`(cos x)⁽ⁿ⁾ = cos(x + nπ/2)`, choices:['cos(x + nπ/2)','sin(x + nπ/2)','cos(nx)','(−1)ⁿ cos x']},
+{cat:'integ', q:'∫ xⁿ dx (n ≠ −1)', a:`x^(n+1)/(n+1) + C`, choices:['x^(n+1)/(n+1)','xⁿ⁺¹','x^(n−1)/(n−1)','n x^(n−1)']},
+{cat:'integ', q:'∫ 1/x dx', a:`ln|x| + C`, choices:['ln|x|','−1/x²','1/x²','ln x²']},
+{cat:'integ', q:'∫ eˣ dx', a:`eˣ + C`, choices:['eˣ','x eˣ','eˣ/x','e^(x+1)']},
+{cat:'integ', q:'∫ aˣ dx', a:`aˣ / ln a + C`, choices:['aˣ/ln a','aˣ ln a','aˣ','x a^(x−1)']},
+{cat:'integ', q:'∫ ln x dx', a:`x ln x − x + C`, choices:['x ln x − x','1/x','x ln x','ln x − x']},
+{cat:'integ', q:'∫ sin x dx', a:`−cos x + C`, choices:['−cos x','cos x','sin x','−sin x']},
+{cat:'integ', q:'∫ cos x dx', a:`sin x + C`, choices:['sin x','−sin x','cos x','−cos x']},
+{cat:'integ', q:'∫ tan x dx', a:`−ln|cos x| + C`, choices:['−ln|cos x|','ln|cos x|','ln|sin x|','−ln|sin x|']},
+{cat:'integ', q:'∫ cot x dx', a:`ln|sin x| + C`, choices:['ln|sin x|','−ln|sin x|','ln|cos x|','−ln|cos x|']},
+{cat:'integ', q:'∫ 1/cos²x dx', a:`tan x + C`, choices:['tan x','−cot x','cot x','−tan x']},
+{cat:'integ', q:'∫ 1/sin²x dx', a:`−cot x + C`, choices:['−cot x','tan x','cot x','−tan x']},
+{cat:'integ', q:'∫ 1/(1 + x²) dx', a:`arctan x + C`, choices:['arctan x','arcsin x','ln(1+x²)','1/(1+x²)']},
+{cat:'integ', q:'∫ 1/√(1 − x²) dx', a:`arcsin x + C`, choices:['arcsin x','arctan x','arccos x','ln(1−x²)']},
+{cat:'integ', q:'∫ 1/√(x² + 1) dx', a:`ln(x + √(x² + 1)) + C`, choices:['ln(x + √(x²+1))','arctan x','arcsin x','√(x²+1)']},
+{cat:'integ', q:'∫ 1/(x² + a²) dx', a:`(1/a) arctan(x/a) + C`, choices:['(1/a) arctan(x/a)','arctan(x/a)','a arctan(ax)','(1/a) arcsin(x/a)']},
+{cat:'integ', q:'∫ 1/√(a² − x²) dx', a:`arcsin(x/a) + C`, choices:['arcsin(x/a)','(1/a) arcsin(x/a)','arctan(x/a)','arccos(x/a)']},
+{cat:'integ', q:'∫ 1/(x² − a²) dx', a:`(1/2a) ln|(x − a)/(x + a)| + C`, choices:['(1/2a) ln|(x−a)/(x+a)|','(1/a) arctan(x/a)','arcsin(x/a)','ln|x²−a²|']},
+{cat:'integ', q:'∫ sinh x dx', a:`cosh x + C`, choices:['cosh x','−cosh x','sinh x','−sinh x']},
+{cat:'integ', q:'∫ cosh x dx', a:`sinh x + C`, choices:['sinh x','−sinh x','cosh x','−cosh x']},
+{cat:'integ', q:'∫ f′ f dx', a:`f²/2 + C`, choices:['f²/2','f²','ln|f|','f′²/2']},
+{cat:'integ', q:'∫ f′/f dx', a:`ln|f| + C`, choices:['ln|f|','f²/2','1/f','−1/f²']},
+{cat:'integ', q:'∫ f′/(1 + f²) dx', a:`arctan(f) + C`, choices:['arctan(f)','ln(1+f²)','arcsin(f)','1/(1+f²)']},
+{cat:'integ', q:'∫ f′ eᶠ dx', a:`eᶠ + C`, choices:['eᶠ','f eᶠ','eᶠ/f','e^(f+1)']},
+{cat:'integ', q:'∫ f′/√f dx', a:`2√f + C`, choices:['2√f','√f','f^(3/2)','1/(2√f)']},
+{cat:'integ', q:'∫ f′ fⁿ dx (n ≠ −1)', a:`f^(n+1)/(n+1) + C`, choices:['f^(n+1)/(n+1)','fⁿ⁺¹','n f^(n−1)','f^(n−1)/(n−1)']},
+{cat:'integ', q:'Intégration par parties (IPP)', a:`∫ u dv = uv − ∫ v du`, choices:['∫ u dv = uv − ∫ v du','∫ u dv = uv + ∫ v du','∫ u dv = u′v − ∫ v du','∫ u dv = uv − ∫ u du']},
+{cat:'integ', q:'Changement de variable', a:`∫ f(φ(x)) φ′(x) dx = ∫ f(u) du`, choices:['∫ f(φ)φ′ dx = ∫ f(u) du','∫ f(φ) dx = ∫ f(u) du','∫ f(φ)φ′ dx = f(u)','∫ f(φ)φ′ dx = ∫ f(u) φ du']},
+{cat:'integ', q:'Choix de u en IPP (règle LIATE)', a:`Log, Inverse trig, Algébrique, Trig, Exponentielle`, choices:['Log, Inv-trig, Algébrique, Trig, Exp','Exp, Trig, Algébrique, Inv-trig, Log','Algébrique en premier toujours','Exp en premier toujours']},
+{cat:'serie', q:'Série géométrique : somme', a:`Σ_{k=0}^∞ qᵏ = 1/(1 − q)   si |q| < 1`, choices:['1/(1 − q)','1/(1 + q)','q/(1 − q)','(1 − q)']},
+{cat:'serie', q:'Série géométrique : convergence', a:`converge ⟺ |q| < 1   (sinon diverge)`, choices:['|q| < 1','|q| ≤ 1','|q| > 1','q > 0']},
+{cat:'serie', q:'Série de Riemann (p-série)', a:`Σ 1/kᵖ converge ⟺ p > 1`, choices:['p > 1','p < 1','p ≥ 0','p ≤ 1']},
+{cat:'serie', q:'Série harmonique Σ 1/k', a:`diverge`, choices:['diverge','converge vers 1','converge vers ln 2','converge vers e']},
+{cat:'serie', q:'Série harmonique alternée', a:`Σ (−1)^(k−1)/k = ln 2   (converge, pas absolt)`, choices:['= ln 2 (converge)','diverge','= 1','= π/4']},
+{cat:'serie', q:'Critère du terme général (nécessaire)', a:`si aₖ ↛ 0  ⟹  la série diverge`, choices:['aₖ ↛ 0 ⟹ diverge','aₖ → 0 ⟹ converge','aₖ → 0 ⟹ diverge','aₖ ↛ 0 ⟹ converge']},
+{cat:'serie', q:'Critère de comparaison', a:`0 ≤ aₖ ≤ bₖ et Σ bₖ converge ⟹ Σ aₖ converge`, choices:['Σ bₖ conv ⟹ Σ aₖ conv','Σ aₖ conv ⟹ Σ bₖ conv','Σ bₖ div ⟹ Σ aₖ conv','toujours convergent']},
+{cat:'serie', q:'Critère de d Alembert (du quotient)', a:`q = lim|aₖ₊₁/aₖ| ;  q<1 conv,  q>1 div,  q=1 indéterminé`, choices:['q<1 conv, q>1 div','q<1 div, q>1 conv','q=1 conv','q>1 conv']},
+{cat:'serie', q:'Critère de Cauchy (de la racine)', a:`q = lim ᵏ√|aₖ| ;  q<1 conv,  q>1 div,  q=1 indéterminé`, choices:['q<1 conv, q>1 div','q<1 div, q>1 conv','q=1 conv','q>1 conv']},
+{cat:'serie', q:'Critère de Leibniz (séries alternées)', a:`aₖ ≥ 0 décroissante → 0  ⟹  Σ (−1)ᵏ aₖ converge`, choices:['aₖ↓→0 ⟹ converge','aₖ→0 suffit toujours','aₖ↑ ⟹ converge','jamais convergent']},
+{cat:'serie', q:'Convergence absolue', a:`Σ |aₖ| converge  ⟹  Σ aₖ converge`, choices:['Σ|aₖ| conv ⟹ Σaₖ conv','Σaₖ conv ⟹ Σ|aₖ| conv','les deux équivalentes','aucun lien']},
+{cat:'serie', q:'Terme en fonction des sommes partielles', a:`aₙ = Sₙ − Sₙ₋₁`, choices:['aₙ = Sₙ − Sₙ₋₁','aₙ = Sₙ + Sₙ₋₁','aₙ = Sₙ/Sₙ₋₁','aₙ = Sₙ₋₁ − Sₙ']},
+{cat:'serie', q:'Série entière de eˣ', a:`Σ_{k≥0} xᵏ/k! = eˣ   (ℝ)`, choices:['Σ xᵏ/k! = eˣ','Σ xᵏ = eˣ','Σ (−1)ᵏ xᵏ/k! = eˣ','Σ x^(2k)/(2k)! = eˣ']},
+{cat:'serie', q:'Série entière de 1/(1 − x)', a:`Σ_{k≥0} xᵏ = 1/(1 − x)   (|x|<1)`, choices:['Σ xᵏ = 1/(1−x)','Σ (−1)ᵏ xᵏ = 1/(1−x)','Σ xᵏ/k = 1/(1−x)','Σ k xᵏ = 1/(1−x)']},
+{cat:'serie', q:'Série entière de 1/(1 + x)', a:`Σ_{k≥0} (−1)ᵏ xᵏ = 1/(1 + x)`, choices:['Σ (−1)ᵏ xᵏ','Σ xᵏ','Σ (−1)ᵏ xᵏ/k','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de ln(1 + x)', a:`Σ_{k≥1} (−1)^(k+1) xᵏ/k   (x ∈ (−1,1])`, choices:['Σ (−1)^(k+1) xᵏ/k','Σ xᵏ/k','Σ (−1)ᵏ xᵏ/k!','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de sin x', a:`Σ_{k≥0} (−1)ᵏ x^(2k+1)/(2k+1)!`, choices:['Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ (−1)ᵏ x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de cos x', a:`Σ_{k≥0} (−1)ᵏ x^(2k)/(2k)!`, choices:['Σ (−1)ᵏ x^(2k)/(2k)!','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de sinh x', a:`Σ_{k≥0} x^(2k+1)/(2k+1)!`, choices:['Σ x^(2k+1)/(2k+1)!','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de cosh x', a:`Σ_{k≥0} x^(2k)/(2k)!`, choices:['Σ x^(2k)/(2k)!','Σ (−1)ᵏ x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ xᵏ/k!']},
+{cat:'serie', q:'Série entière de arctan x', a:`Σ_{k≥0} (−1)ᵏ x^(2k+1)/(2k+1)   (x∈[−1,1])`, choices:['Σ (−1)ᵏ x^(2k+1)/(2k+1)','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k+1)/(2k+1)','Σ (−1)ᵏ x^(2k)/(2k)']},
+{cat:'serie', q:'Série binomiale (1 + x)^α', a:`Σ_{k≥0} C(α,k) xᵏ,  |x|<1`, choices:['Σ C(α,k) xᵏ','Σ αᵏ xᵏ','Σ xᵏ/k!','Σ (−1)ᵏ α xᵏ']},
+{cat:'serie', q:'Rayon de convergence r', a:`1/r = limsup |aₖ|^(1/k)   (ou lim|aₖ/aₖ₊₁|)`, choices:['1/r = limsup |aₖ|^(1/k)','r = limsup |aₖ|^(1/k)','1/r = lim |aₖ|','r = Σ aₖ']},
+{cat:'serie', q:'Domaine de convergence d une série entière', a:`converge abs. pour |x − a| < r, diverge pour |x − a| > r`, choices:['conv |x−a|<r, div |x−a|>r','conv partout','conv |x−a|>r','diverge toujours']},
+{cat:'serie', q:'Polynôme de Taylor (ordre n) en a', a:`Σ_{k=0}^n f⁽ᵏ⁾(a)/k! (x − a)ᵏ`, choices:['Σ f⁽ᵏ⁾(a)/k! (x−a)ᵏ','Σ f⁽ᵏ⁾(a) (x−a)ᵏ','Σ f⁽ᵏ⁾(a)/k (x−a)ᵏ','Σ fᵏ(a)/k! xᵏ']},
+
+];
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let state = JSON.parse(localStorage.getItem('fc-analyse-v2') || '{}');
+let currentFilter = 'all';
+let viewMode = 'grid';
+let shuffledIndices = [...CARDS.keys()];
+let studyQueue = [], studyIdx = 0, studyRevealed = false;
+let qcmCorrect = 0, qcmAnswered = 0;
+
+function save() { localStorage.setItem('fc-analyse-v2', JSON.stringify(state)); }
+function filteredIndices() {
+  return shuffledIndices.filter(i => currentFilter === 'all' || CARDS[i].cat === currentFilter);
+}
+const catLabels = {trigo:'Trigonométrie', deriv:'Dérivées', integ:'Intégrales', edo:'EDO', parcoeur:'Par cœur', serie:'Séries'};
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtAns(a) { return esc(a).replace(/\n/g,'<br>'); }
+function tagHtml(cat) { return `<div class="card-tag tag-${cat}">${catLabels[cat]||cat}</div>`; }
+
+// ══════════════════════════════════════════════════════
+//  RENDER GRID
+// ══════════════════════════════════════════════════════
+function renderGrid() {
+  const grid = document.getElementById('cards-grid');
+  const indices = filteredIndices();
+  if (!indices.length) { grid.innerHTML = '<div class="empty">Aucune carte dans cette catégorie.</div>'; return; }
+  grid.innerHTML = '';
+  indices.forEach(i => {
+    const c = CARDS[i], st = state[i];
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.innerHTML = `
+      <div class="card ${st?'flipped':''}" data-idx="${i}">
+        <div class="card-face card-front">
+          <div>${tagHtml(c.cat)}<div class="card-question">${esc(c.q)}</div>${c.hint?`<div class="card-hint">💡 ${esc(c.hint)}</div>`:''}</div>
+          <div class="card-flip-hint">Cliquer pour voir la réponse ▼</div>
+        </div>
+        <div class="card-face card-back">
+          <div>${tagHtml(c.cat)}<div class="card-answer">${fmtAns(c.a)}</div></div>
+          <div class="card-footer">
+            <button class="vote-btn ${st==='ko'?'ko':''}" data-action="ko" data-idx="${i}">✗ À revoir</button>
+            <button class="vote-btn ${st==='ok'?'ok':''}" data-action="ok" data-idx="${i}">✓ Maîtrisé</button>
+          </div>
+        </div>
+      </div>`;
+    grid.appendChild(wrap);
+  });
+  grid.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', e => { if (e.target.closest('.vote-btn')) return; card.classList.toggle('flipped'); });
+  });
+  bindVoteBtns(grid);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER SCROLL
+// ══════════════════════════════════════════════════════
+function renderScroll() {
+  const container = document.getElementById('cards-scroll');
+  const indices = filteredIndices();
+  if (!indices.length) { container.innerHTML = '<div class="empty">Aucune carte dans cette catégorie.</div>'; return; }
+  container.innerHTML = '';
+  indices.forEach((i, pos) => {
+    const c = CARDS[i], st = state[i];
+    if (pos > 0) { const conn = document.createElement('div'); conn.className = 'scroll-connector'; container.appendChild(conn); }
+    const item = document.createElement('div');
+    item.className = 'scroll-item';
+    const revealed = !!st;
+    item.innerHTML = `
+      <div class="scroll-card" data-idx="${i}">
+        ${tagHtml(c.cat)}
+        <div class="scroll-question">${esc(c.q)}</div>
+        ${c.hint?`<div class="scroll-hint">💡 ${esc(c.hint)}</div>`:''}
+        <button class="scroll-reveal-btn" data-idx="${i}">${revealed?'▲ Cacher':'▼ Voir la réponse'}</button>
+        <div class="scroll-answer-wrap${revealed?' revealed':''}">
+          <div class="scroll-divider"></div>
+          <div class="scroll-answer-text">${fmtAns(c.a)}</div>
+        </div>
+        <div class="scroll-footer${revealed?'':' hidden'}">
+          <button class="vote-btn ${st==='ko'?'ko':''}" data-action="ko" data-idx="${i}">✗ À revoir</button>
+          <button class="vote-btn ${st==='ok'?'ok':''}" data-action="ok" data-idx="${i}">✓ Maîtrisé</button>
+        </div>
+      </div>`;
+    container.appendChild(item);
+  });
+  container.querySelectorAll('.scroll-reveal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.scroll-card');
+      const aw = card.querySelector('.scroll-answer-wrap');
+      const ft = card.querySelector('.scroll-footer');
+      const rev = aw.classList.contains('revealed');
+      aw.classList.toggle('revealed', !rev);
+      ft.classList.toggle('hidden', rev);
+      btn.textContent = rev ? '▼ Voir la réponse' : '▲ Cacher';
+    });
+  });
+  bindVoteBtns(container);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER QCM
+// ══════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function renderQCM() {
+  const container = document.getElementById('cards-qcm');
+  const scoreBar = document.getElementById('qcm-score-bar');
+  const indices = filteredIndices().filter(i => CARDS[i].choices && CARDS[i].choices.length >= 2);
+  if (!indices.length) {
+    container.innerHTML = '<div class="empty">Aucune carte QCM dans cette catégorie.<br><small>Passe en mode Défilement pour voir toutes les cartes.</small></div>';
+    scoreBar.style.display = 'none'; return;
+  }
+  qcmCorrect = 0; qcmAnswered = 0;
+  updateQCMScore();
+  scoreBar.style.display = 'block';
+  container.innerHTML = '';
+
+  indices.forEach((i, pos) => {
+    const c = CARDS[i];
+    const correct = c.choices[0];
+    const shuffled = shuffle(c.choices);
+    if (pos > 0) { const conn = document.createElement('div'); conn.className = 'scroll-connector'; container.appendChild(conn); }
+    const item = document.createElement('div');
+    item.className = 'qcm-item';
+
+    const choicesHtml = shuffled.map((ch, ci) => `
+      <label class="qcm-choice" id="qcm-choice-${i}-${ci}">
+        <input type="radio" name="qcm-${i}" value="${esc(ch)}" data-correct="${ch === correct ? '1' : '0'}">
+        <label style="pointer-events:none">${esc(ch)}</label>
+      </label>`).join('');
+
+    item.innerHTML = `
+      <div class="qcm-card" data-idx="${i}" data-correct="${esc(correct)}">
+        ${tagHtml(c.cat)}
+        <div class="qcm-question">${esc(c.q)}</div>
+        <div class="qcm-choices">${choicesHtml}</div>
+        <button class="qcm-verify-btn" data-idx="${i}" disabled>Vérifier</button>
+        <div class="qcm-feedback" id="qcm-fb-${i}"></div>
+      </div>`;
+    container.appendChild(item);
+  });
+
+  // Enable verify on selection
+  container.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const card = radio.closest('.qcm-card');
+      card.querySelector('.qcm-verify-btn').disabled = false;
+    });
+  });
+
+  // Verify button
+  container.querySelectorAll('.qcm-verify-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.qcm-card');
+      const idx = card.dataset.idx;
+      const correct = card.dataset.correct;
+      const selected = card.querySelector('input[type="radio"]:checked');
+      if (!selected) return;
+      const isCorrect = selected.dataset.correct === '1';
+      const fb = document.getElementById(`qcm-fb-${idx}`);
+
+      // Disable all radios
+      card.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+      btn.disabled = true;
+
+      // Highlight choices
+      card.querySelectorAll('.qcm-choice').forEach(ch => {
+        const inp = ch.querySelector('input');
+        if (inp.dataset.correct === '1') ch.classList.add('correct');
+        else if (inp.checked) ch.classList.add('wrong');
+      });
+
+      fb.className = 'qcm-feedback ' + (isCorrect ? 'ok' : 'ko');
+      fb.textContent = isCorrect ? '✓ Bonne réponse !' : `✗ La bonne réponse était : ${correct}`;
+
+      qcmAnswered++;
+      if (isCorrect) qcmCorrect++;
+      updateQCMScore();
+    });
+  });
+}
+
+function updateQCMScore() {
+  document.getElementById('qcm-correct').textContent = qcmCorrect;
+  document.getElementById('qcm-answered').textContent = qcmAnswered;
+}
+
+// ══════════════════════════════════════════════════════
+//  VOTE BTNS
+// ══════════════════════════════════════════════════════
+function bindVoteBtns(root) {
+  root.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx, action = btn.dataset.action;
+      state[idx] = (state[idx] === action) ? undefined : action;
+      save(); renderCurrent(); updateStats();
+    });
+  });
+}
+
+function renderCurrent() {
+  if (viewMode === 'grid') renderGrid();
+  else if (viewMode === 'scroll') renderScroll();
+  else renderQCM();
+}
+
+// ══════════════════════════════════════════════════════
+//  MODE SWITCH
+// ══════════════════════════════════════════════════════
+function setMode(mode) {
+  viewMode = mode;
+  document.getElementById('cards-grid').classList.toggle('hidden', mode !== 'grid');
+  document.getElementById('cards-scroll').classList.toggle('active', mode === 'scroll');
+  document.getElementById('cards-qcm').classList.toggle('active', mode === 'qcm');
+  document.getElementById('qcm-score-bar').style.display = mode === 'qcm' ? 'block' : 'none';
+  ['btn-mode-grid','btn-mode-scroll','btn-mode-qcm'].forEach(id => document.getElementById(id).classList.remove('active-mode'));
+  document.getElementById('btn-mode-' + mode).classList.add('active-mode');
+  renderCurrent();
+}
+document.getElementById('btn-mode-grid').addEventListener('click', () => setMode('grid'));
+document.getElementById('btn-mode-scroll').addEventListener('click', () => setMode('scroll'));
+document.getElementById('btn-mode-qcm').addEventListener('click', () => setMode('qcm'));
+
+// ══════════════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════════════
+function updateStats() {
+  const total = CARDS.length;
+  const ok = Object.values(state).filter(v=>v==='ok').length;
+  const ko = Object.values(state).filter(v=>v==='ko').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-ok').textContent = ok;
+  document.getElementById('stat-ko').textContent = ko;
+  const pct = total ? Math.round(ok/total*100) : 0;
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('progress-label').textContent = `${ok} / ${total} cartes maîtrisées (${pct}%)`;
+}
+
+// ══════════════════════════════════════════════════════
+//  FILTERS
+// ══════════════════════════════════════════════════════
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.cat;
+    renderCurrent();
+  });
+});
+
+// ══════════════════════════════════════════════════════
+//  SHUFFLE & RESET
+// ══════════════════════════════════════════════════════
+document.getElementById('btn-shuffle').addEventListener('click', () => {
+  shuffledIndices = shuffle([...CARDS.keys()]); renderCurrent();
+});
+document.getElementById('btn-unshuffle').addEventListener('click', () => {
+  shuffledIndices = [...CARDS.keys()]; renderCurrent();
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Réinitialiser toute la progression ?')) return;
+  state = {}; save(); renderCurrent(); updateStats();
+});
+
+// ══════════════════════════════════════════════════════
+//  STUDY MODE
+// ══════════════════════════════════════════════════════
+const studyModal = document.getElementById('study-modal');
+const studyQ = document.getElementById('study-question');
+const studyA = document.getElementById('study-answer');
+const studyAT = document.getElementById('study-answer-text');
+const studyProg = document.getElementById('study-progress');
+const modalTag = document.getElementById('modal-tag');
+const modalNav = document.getElementById('modal-nav');
+
+document.getElementById('btn-study').addEventListener('click', () => {
+  studyQueue = filteredIndices().slice(); studyIdx = 0;
+  studyModal.classList.add('open'); showStudyCard();
+});
+document.getElementById('modal-close').addEventListener('click', () => {
+  studyModal.classList.remove('open'); renderCurrent(); updateStats();
+});
+
+function showStudyCard() {
+  studyRevealed = false;
+  if (studyIdx >= studyQueue.length) {
+    const ok = studyQueue.filter(i => state[i]==='ok').length;
+    studyQ.innerHTML = `<span style="font-size:2rem">🎉</span><br><br>Session terminée !<br><span style="font-size:0.9rem;color:var(--muted)">${ok}/${studyQueue.length} maîtrisées</span>`;
+    studyA.classList.remove('visible'); modalTag.innerHTML = ''; studyProg.textContent = '';
+    modalNav.innerHTML = `<button class="nav-btn btn-reveal" onclick="document.getElementById('study-modal').classList.remove('open');renderCurrent();updateStats()">Fermer</button>`;
+    return;
+  }
+  const i = studyQueue[studyIdx], c = CARDS[i];
+  studyProg.innerHTML = `Carte <span class="study-score">${studyIdx+1} / ${studyQueue.length}</span>`;
+  modalTag.innerHTML = tagHtml(c.cat);
+  studyQ.textContent = c.q;
+  if (c.hint) studyQ.innerHTML += `<div style="font-size:0.78rem;color:var(--muted);margin-top:8px">💡 ${esc(c.hint)}</div>`;
+  studyA.classList.remove('visible');
+  studyAT.innerHTML = fmtAns(c.a);
+  modalNav.innerHTML = `<button class="nav-btn btn-reveal" id="btn-reveal">Voir la réponse</button>`;
+  document.getElementById('btn-reveal').addEventListener('click', revealStudy);
+}
+
+function revealStudy() {
+  studyRevealed = true;
+  studyA.classList.add('visible');
+  const i = studyQueue[studyIdx];
+  modalNav.innerHTML = `
+    <button class="nav-btn btn-ko" id="s-ko">✗ À revoir</button>
+    <button class="nav-btn btn-ok" id="s-ok">✓ Maîtrisé</button>
+    <button class="nav-btn btn-skip" id="s-skip">→ Passer</button>`;
+  document.getElementById('s-ok').addEventListener('click', () => { state[i]='ok'; save(); studyIdx++; showStudyCard(); });
+  document.getElementById('s-ko').addEventListener('click', () => { state[i]='ko'; save(); studyIdx++; showStudyCard(); });
+  document.getElementById('s-skip').addEventListener('click', () => { studyIdx++; showStudyCard(); });
+}
+
+document.addEventListener('keydown', e => {
+  if (!studyModal.classList.contains('open')) return;
+  if (e.key==='Escape') { studyModal.classList.remove('open'); renderCurrent(); updateStats(); }
+  if (e.key===' ' && !studyRevealed) { e.preventDefault(); revealStudy(); }
+  if (e.key==='ArrowRight' && studyRevealed) document.getElementById('s-ok')?.click();
+  if (e.key==='ArrowLeft'  && studyRevealed) document.getElementById('s-ko')?.click();
+});
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+renderGrid();
+updateStats();
+</script>
+</body>
+</html>

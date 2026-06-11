@@ -1152,8 +1152,37 @@ const modalTag = document.getElementById('modal-tag');
 const modalNav = document.getElementById('modal-nav');
 
 document.getElementById('btn-study').addEventListener('click', () => {
-  studyQueue = filteredIndices().slice(); studyIdx = 0;
-  studyModal.classList.add('open'); showStudyCard();
+  const all = filteredIndices();
+  const nonMastered = all.filter(i => state[i] !== 'ok');
+  if (nonMastered.length === 0) {
+    studyQueue = all.slice(); studyIdx = 0;
+    studyModal.classList.add('open'); showStudyCard(); return;
+  }
+  // Show choice dialog
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:16px;padding:32px;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Mode étude</div>
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px">${all.length} cartes au total · <b>${nonMastered.length}</b> non maîtrisées</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="study-opt-ko" style="padding:12px 20px;border-radius:10px;border:none;background:var(--edo);color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer">🎯 Non maîtrisées (${nonMastered.length})</button>
+        <button id="study-opt-all" style="padding:12px 20px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9rem;font-weight:600;cursor:pointer">📚 Toutes les cartes (${all.length})</button>
+        <button id="study-opt-cancel" style="padding:8px;border:none;background:none;color:var(--muted);font-size:0.85rem;cursor:pointer">Annuler</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#study-opt-ko').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    studyQueue = nonMastered.slice(); studyIdx = 0;
+    studyModal.classList.add('open'); showStudyCard();
+  });
+  overlay.querySelector('#study-opt-all').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    studyQueue = all.slice(); studyIdx = 0;
+    studyModal.classList.add('open'); showStudyCard();
+  });
+  overlay.querySelector('#study-opt-cancel').addEventListener('click', () => document.body.removeChild(overlay));
 });
 document.getElementById('modal-close').addEventListener('click', () => {
   studyModal.classList.remove('open'); renderCurrent(); updateStats();

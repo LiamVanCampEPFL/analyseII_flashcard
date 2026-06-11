@@ -12,6 +12,7 @@
     --edo:   #3b82f6;
     --parcoeur: #0d9488;
     --serie: #db2777;
+    --prim:  #7c3aed;
     --bg:      #f8fafc;
     --surface: #ffffff;
     --surface2: #f1f5f9;
@@ -55,6 +56,7 @@
   .filter-btn[data-cat="edo"].active   { background: var(--edo); }
   .filter-btn[data-cat="parcoeur"].active { background: var(--parcoeur); }
   .filter-btn[data-cat="serie"].active { background: var(--serie); }
+  .filter-btn[data-cat="prim"].active  { background: var(--prim); }
   .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
   .icon-btn {
     padding: 6px 14px; border-radius: 8px;
@@ -192,6 +194,7 @@
   <button class="filter-btn" data-cat="edo"   style="color:var(--edo)">EDO</button>
   <button class="filter-btn" data-cat="serie" style="color:var(--serie)">Séries</button>
   <button class="filter-btn" data-cat="parcoeur" style="color:var(--parcoeur)">Par cœur</button>
+  <button class="filter-btn" data-cat="prim" style="color:var(--prim)">Primitives</button>
   <div class="sep"></div>
   <button class="icon-btn active-mode" id="btn-mode-grid">⊞ Grille</button>
   <button class="icon-btn" id="btn-mode-scroll">☰ Défilement</button>
@@ -539,6 +542,101 @@ const CARDS = [
  a:`Changement de variable : ∫ f(φ)φ′ dx = ∫ f(u) du\nIPP : ∫ u dv = uv - ∫ v du   (choix de u : LIATE)\nRéflexe : ∫ φ′/φ dx = ln|φ|`,
  choices:['∫ u dv = uv - ∫ v du','∫ u dv = uv + ∫ v du','∫ u dv = u′v - ∫ v du','∫ f(φ)φ′ dx = f(u)']},
 
+// ── PAR CŒUR : identités trig individuelles ──────────────────────
+{cat:'parcoeur', q:'sin²x + cos²x = ?', a:`sin²x + cos²x = 1`, choices:['1','0','2','sin x cos x']},
+{cat:'parcoeur', q:'1 + tan²x = ?', a:`1 + tan²x = 1/cos²x`, choices:['1/cos²x','1/sin²x','1 + cot²x','cos²x']},
+{cat:'parcoeur', q:'cos²x = ? (autre écriture)', a:`cos²x = 1/(1 + tan²x)`, choices:['1/(1 + tan²x)','1/(1 − tan²x)','1 − sin²x seulement','cos x · cos x seulement']},
+{cat:'parcoeur', q:'tan x = ? (en sin/cos)', a:`tan x = sin x / cos x`, choices:['sin x / cos x','cos x / sin x','1/cos x','1/sin x']},
+{cat:'parcoeur', q:'sin(−x) = ?', a:`sin(−x) = −sin x  (impaire)`, choices:['−sin x','sin x','−cos x','cos x']},
+{cat:'parcoeur', q:'cos(−x) = ?', a:`cos(−x) = cos x  (paire)`, choices:['cos x','−cos x','sin x','−sin x']},
+{cat:'parcoeur', q:'tan(−x) = ?', a:`tan(−x) = −tan x  (impaire)`, choices:['−tan x','tan x','−cot x','cot x']},
+{cat:'parcoeur', q:'sin(x + 2π) = ?', a:`sin(x + 2π) = sin x`, choices:['sin x','−sin x','cos x','0']},
+{cat:'parcoeur', q:'cos(x + 2π) = ?', a:`cos(x + 2π) = cos x`, choices:['cos x','−cos x','sin x','0']},
+{cat:'parcoeur', q:'tan(x + π) = ?', a:`tan(x + π) = tan x  (période π)`, choices:['tan x','−tan x','cot x','tan(2x)']},
+{cat:'parcoeur', q:'cos(π − α) = ?', a:`cos(π − α) = −cos α`, choices:['−cos α','cos α','sin α','−sin α']},
+{cat:'parcoeur', q:'sin(π − α) = ?', a:`sin(π − α) = sin α`, choices:['sin α','−sin α','cos α','−cos α']},
+{cat:'parcoeur', q:'cos(π + α) = ?', a:`cos(π + α) = −cos α`, choices:['−cos α','cos α','−sin α','sin α']},
+{cat:'parcoeur', q:'sin(π + α) = ?', a:`sin(π + α) = −sin α`, choices:['−sin α','sin α','−cos α','cos α']},
+{cat:'parcoeur', q:'tan(π − α) = ?', a:`tan(π − α) = −tan α`, choices:['−tan α','tan α','cot α','−cot α']},
+{cat:'parcoeur', q:'tan(π + α) = ?', a:`tan(π + α) = tan α`, choices:['tan α','−tan α','cot α','−cot α']},
+{cat:'parcoeur', q:'sin(π/2 − x) = ?', a:`sin(π/2 − x) = cos x`, choices:['cos x','sin x','−cos x','−sin x']},
+{cat:'parcoeur', q:'cos(π/2 − x) = ?', a:`cos(π/2 − x) = sin x`, choices:['sin x','cos x','−sin x','−cos x']},
+{cat:'parcoeur', q:'sin(π/2 + x) = ?', a:`sin(π/2 + x) = cos x`, choices:['cos x','−cos x','sin x','−sin x']},
+{cat:'parcoeur', q:'cos(π/2 + x) = ?', a:`cos(π/2 + x) = −sin x`, choices:['−sin x','sin x','cos x','−cos x']},
+{cat:'parcoeur', q:'sin(α + β) = ?', a:`sin(α + β) = sin α cos β + cos α sin β`, choices:['sin α cos β + cos α sin β','sin α cos β − cos α sin β','cos α cos β − sin α sin β','sin α sin β + cos α cos β']},
+{cat:'parcoeur', q:'sin(α − β) = ?', a:`sin(α − β) = sin α cos β − cos α sin β`, choices:['sin α cos β − cos α sin β','sin α cos β + cos α sin β','cos α cos β + sin α sin β','sin α sin β − cos α cos β']},
+{cat:'parcoeur', q:'cos(α + β) = ?', a:`cos(α + β) = cos α cos β − sin α sin β`, choices:['cos α cos β − sin α sin β','cos α cos β + sin α sin β','sin α sin β − cos α cos β','sin α cos β + cos α sin β']},
+{cat:'parcoeur', q:'cos(α − β) = ?', a:`cos(α − β) = cos α cos β + sin α sin β`, choices:['cos α cos β + sin α sin β','cos α cos β − sin α sin β','sin α cos β − cos α sin β','sin α sin β − cos α cos β']},
+{cat:'parcoeur', q:'sin(2x) = ?', a:`sin(2x) = 2 sin x cos x`, choices:['2 sin x cos x','sin²x − cos²x','2cos²x − 1','1 − 2sin²x']},
+{cat:'parcoeur', q:'cos(2x) = ? (3 formes)', a:`cos(2x) = cos²x − sin²x = 2cos²x − 1 = 1 − 2sin²x`, choices:['cos²x − sin²x','2 sin x cos x','sin²x − cos²x','1 + 2sin²x']},
+{cat:'parcoeur', q:'cos²x = ? (linéarisation)', a:`cos²x = (1 + cos 2x)/2`, choices:['(1 + cos 2x)/2','(1 − cos 2x)/2','(1 + sin 2x)/2','cos 2x/2']},
+{cat:'parcoeur', q:'sin²x = ? (linéarisation)', a:`sin²x = (1 − cos 2x)/2`, choices:['(1 − cos 2x)/2','(1 + cos 2x)/2','(1 − sin 2x)/2','sin 2x/2']},
+
+// ── PAR CŒUR : dérivées individuelles ────────────────────────────
+{cat:'parcoeur', q:'(xⁿ)′ = ?', a:`(xⁿ)′ = n xⁿ⁻¹`, choices:['n xⁿ⁻¹','xⁿ⁻¹','n xⁿ','(n−1)xⁿ']},
+{cat:'parcoeur', q:'(√x)′ = ?', a:`(√x)′ = 1/(2√x)`, choices:['1/(2√x)','1/√x','2√x','−1/(2√x)']},
+{cat:'parcoeur', q:'(1/x)′ = ?', a:`(1/x)′ = −1/x²`, choices:['−1/x²','1/x²','−1/x','ln|x|']},
+{cat:'parcoeur', q:'(eˣ)′ = ?', a:`(eˣ)′ = eˣ`, choices:['eˣ','xeˣ⁻¹','neˣ','1/eˣ']},
+{cat:'parcoeur', q:'(aˣ)′ = ?', a:`(aˣ)′ = aˣ ln a`, choices:['aˣ ln a','aˣ','x a^(x−1)','aˣ/ln a']},
+{cat:'parcoeur', q:'(ln|x|)′ = ?', a:`(ln|x|)′ = 1/x`, choices:['1/x','1/x²','ln x','x']},
+{cat:'parcoeur', q:'(log_a x)′ = ?', a:`(log_a x)′ = 1/(x ln a)`, choices:['1/(x ln a)','1/x','ln a/x','1/(x log a)']},
+{cat:'parcoeur', q:'(sin x)′ = ?', a:`(sin x)′ = cos x`, choices:['cos x','−cos x','−sin x','sin x']},
+{cat:'parcoeur', q:'(cos x)′ = ?', a:`(cos x)′ = −sin x`, choices:['−sin x','sin x','cos x','−cos x']},
+{cat:'parcoeur', q:'(tan x)′ = ?', a:`(tan x)′ = 1/cos²x = 1 + tan²x`, choices:['1/cos²x','1/sin²x','−1/cos²x','cos²x']},
+{cat:'parcoeur', q:'(cot x)′ = ?', a:`(cot x)′ = −1/sin²x`, choices:['−1/sin²x','1/sin²x','1/cos²x','−1/cos²x']},
+{cat:'parcoeur', q:'(arctan x)′ = ?', a:`(arctan x)′ = 1/(1 + x²)`, choices:['1/(1 + x²)','1/√(1−x²)','−1/(1+x²)','1/(1−x²)']},
+{cat:'parcoeur', q:'(arcsin x)′ = ?', a:`(arcsin x)′ = 1/√(1 − x²)`, choices:['1/√(1−x²)','−1/√(1−x²)','1/(1+x²)','1/√(x²−1)']},
+{cat:'parcoeur', q:'(arccos x)′ = ?', a:`(arccos x)′ = −1/√(1 − x²)`, choices:['−1/√(1−x²)','1/√(1−x²)','−1/(1+x²)','1/√(x²−1)']},
+{cat:'parcoeur', q:'(sinh x)′ = ?', a:`(sinh x)′ = cosh x`, choices:['cosh x','−cosh x','sinh x','−sinh x']},
+{cat:'parcoeur', q:'(cosh x)′ = ?', a:`(cosh x)′ = sinh x`, choices:['sinh x','−sinh x','cosh x','−cosh x']},
+{cat:'parcoeur', q:'(tanh x)′ = ?', a:`(tanh x)′ = 1/cosh²x = 1 − tanh²x`, choices:['1/cosh²x','1/sinh²x','−1/cosh²x','1 + tanh²x']},
+{cat:'parcoeur', q:'(|x|)′ = ? (x ≠ 0)', a:`(|x|)′ = x/|x| = sgn x`, choices:['x/|x| = sgn x','1','−1','|x|']},
+{cat:'parcoeur', q:'nᵉ dérivée de eˣ', a:`(eˣ)⁽ⁿ⁾ = eˣ`, choices:['eˣ','n eˣ','e^(nx)','xeˣ']},
+{cat:'parcoeur', q:'nᵉ dérivée de sin x', a:`(sin x)⁽ⁿ⁾ = sin(x + nπ/2)`, choices:['sin(x + nπ/2)','cos(x + nπ/2)','sin(nx)','(−1)ⁿ sin x']},
+{cat:'parcoeur', q:'nᵉ dérivée de cos x', a:`(cos x)⁽ⁿ⁾ = cos(x + nπ/2)`, choices:['cos(x + nπ/2)','sin(x + nπ/2)','cos(nx)','(−1)ⁿ cos x']},
+{cat:'parcoeur', q:'nᵉ dérivée de ln x', a:`(ln x)⁽ⁿ⁾ = (−1)^(n−1) (n−1)! / xⁿ`, choices:['(−1)^(n−1)(n−1)!/xⁿ','(−1)ⁿ n!/xⁿ','(n−1)!/xⁿ','1/xⁿ']},
+{cat:'parcoeur', q:'nᵉ dérivée de aˣ', a:`(aˣ)⁽ⁿ⁾ = aˣ (ln a)ⁿ`, choices:['aˣ (ln a)ⁿ','n aˣ','aˣ ln a','(ln a)ⁿ']},
+
+// ── PAR CŒUR : intégrales individuelles ──────────────────────────
+{cat:'parcoeur', q:'∫ xⁿ dx = ? (n ≠ −1)', a:`xⁿ⁺¹/(n+1) + C`, choices:['xⁿ⁺¹/(n+1)','xⁿ⁺¹','x^(n−1)/(n−1)','n xⁿ⁻¹']},
+{cat:'parcoeur', q:'∫ 1/x dx = ?', a:`ln|x| + C`, choices:['ln|x|','−1/x²','1/x²','ln x²']},
+{cat:'parcoeur', q:'∫ eˣ dx = ?', a:`eˣ + C`, choices:['eˣ','xeˣ','eˣ/x','e^(x+1)']},
+{cat:'parcoeur', q:'∫ aˣ dx = ?', a:`aˣ / ln a + C`, choices:['aˣ/ln a','aˣ ln a','aˣ','x a^(x−1)']},
+{cat:'parcoeur', q:'∫ sin x dx = ?', a:`−cos x + C`, choices:['−cos x','cos x','sin x','−sin x']},
+{cat:'parcoeur', q:'∫ cos x dx = ?', a:`sin x + C`, choices:['sin x','−sin x','cos x','−cos x']},
+{cat:'parcoeur', q:'∫ tan x dx = ?', a:`−ln|cos x| + C`, choices:['−ln|cos x|','ln|cos x|','ln|sin x|','−ln|sin x|']},
+{cat:'parcoeur', q:'∫ cot x dx = ?', a:`ln|sin x| + C`, choices:['ln|sin x|','−ln|sin x|','ln|cos x|','−ln|cos x|']},
+{cat:'parcoeur', q:'∫ 1/(1 + x²) dx = ?', a:`arctan x + C`, choices:['arctan x','arcsin x','ln(1+x²)','1/(1+x²)']},
+{cat:'parcoeur', q:'∫ 1/√(1 − x²) dx = ?', a:`arcsin x + C`, choices:['arcsin x','arctan x','arccos x','ln(1−x²)']},
+{cat:'parcoeur', q:'∫ ln x dx = ?', a:`x ln x − x + C`, choices:['x ln x − x','x ln x','ln x / x','x² ln x']},
+{cat:'parcoeur', q:'∫ sinh x dx = ?', a:`cosh x + C`, choices:['cosh x','−cosh x','sinh x','−sinh x']},
+{cat:'parcoeur', q:'∫ cosh x dx = ?', a:`sinh x + C`, choices:['sinh x','−sinh x','cosh x','−cosh x']},
+{cat:'parcoeur', q:'∫ 1/cos²x dx = ?', a:`tan x + C`, choices:['tan x','−cot x','cot x','−tan x']},
+{cat:'parcoeur', q:'∫ 1/sin²x dx = ?', a:`−cot x + C`, choices:['−cot x','tan x','cot x','−tan x']},
+{cat:'parcoeur', q:'∫ f′·f dx = ?', a:`f²/2 + C`, choices:['f²/2','f²','ln|f|','f′²/2']},
+{cat:'parcoeur', q:'∫ f′/f dx = ?', a:`ln|f| + C`, choices:['ln|f|','f²/2','1/f','−1/f²']},
+{cat:'parcoeur', q:'∫ f′/(1 + f²) dx = ?', a:`arctan(f) + C`, choices:['arctan(f)','ln(1+f²)','arcsin(f)','1/(1+f²)']},
+{cat:'parcoeur', q:'∫ 1/(x² + a²) dx = ?', a:`(1/a) arctan(x/a) + C`, choices:['(1/a) arctan(x/a)','arctan(x/a)','a arctan(ax)','(1/a) arcsin(x/a)']},
+{cat:'parcoeur', q:'∫ 1/√(a² − x²) dx = ?', a:`arcsin(x/a) + C`, choices:['arcsin(x/a)','(1/a) arcsin(x/a)','arctan(x/a)','arccos(x/a)']},
+{cat:'parcoeur', q:'∫ 1/√(1 + x²) dx = ?', a:`ln(x + √(1 + x²)) + C`, choices:['ln(x + √(1+x²))','arctan x','arcsin x','√(1+x²)']},
+{cat:'parcoeur', q:'∫ 1/(x² − a²) dx = ?', a:`(1/2a) ln|(x − a)/(x + a)| + C`, choices:['(1/2a) ln|(x−a)/(x+a)|','(1/a) arctan(x/a)','arcsin(x/a)','ln|x²−a²|']},
+{cat:'parcoeur', q:'∫ f′ eᶠ dx = ?', a:`eᶠ + C`, choices:['eᶠ','f eᶠ','eᶠ/f','e^(f+1)']},
+{cat:'parcoeur', q:'∫ f′ fⁿ dx = ? (n ≠ −1)', a:`f^(n+1)/(n+1) + C`, choices:['f^(n+1)/(n+1)','fⁿ⁺¹','n f^(n−1)','f^(n−1)/(n−1)']},
+{cat:'parcoeur', q:'∫ f′/√f dx = ?', a:`2√f + C`, choices:['2√f','√f','f^(3/2)','1/(2√f)']},
+
+// ── PAR CŒUR : séries/DL individuelles ───────────────────────────
+{cat:'parcoeur', q:'DL de 1/(1 − x) = ? (domaine)', a:`1/(1−x) = Σ xᵏ = 1 + x + x² + …   (|x| < 1)`, choices:['Σ xᵏ','Σ (−1)ᵏ xᵏ','Σ xᵏ/k!','Σ xᵏ/k']},
+{cat:'parcoeur', q:'DL de 1/(1 + x) = ? (domaine)', a:`1/(1+x) = Σ (−1)ᵏ xᵏ = 1 − x + x² − …   (|x| < 1)`, choices:['Σ (−1)ᵏ xᵏ','Σ xᵏ','Σ xᵏ/k!','Σ (−1)ᵏ xᵏ/k']},
+{cat:'parcoeur', q:'DL de ln(1 + x) = ? (domaine)', a:`ln(1+x) = x − x²/2 + x³/3 − … = Σ (−1)^(k+1) xᵏ/k   (x ∈ (−1,1])`, choices:['Σ (−1)^(k+1) xᵏ/k','Σ xᵏ/k','Σ (−1)ᵏ xᵏ/k!','Σ xᵏ/k!']},
+{cat:'parcoeur', q:'DL de eˣ = ? (domaine)', a:`eˣ = 1 + x + x²/2! + … = Σ xᵏ/k!   (x ∈ ℝ)`, choices:['Σ xᵏ/k!','Σ xᵏ','Σ (−1)ᵏ xᵏ/k!','Σ x^(2k)/(2k)!']},
+{cat:'parcoeur', q:'DL de sin x = ? (domaine)', a:`sin x = x − x³/3! + x⁵/5! − … = Σ (−1)ᵏ x^(2k+1)/(2k+1)!   (x ∈ ℝ)`, choices:['Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ (−1)ᵏ x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ xᵏ/k!']},
+{cat:'parcoeur', q:'DL de cos x = ? (domaine)', a:`cos x = 1 − x²/2! + x⁴/4! − … = Σ (−1)ᵏ x^(2k)/(2k)!   (x ∈ ℝ)`, choices:['Σ (−1)ᵏ x^(2k)/(2k)!','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ xᵏ/k!']},
+{cat:'parcoeur', q:'DL de sinh x = ? (domaine)', a:`sinh x = x + x³/3! + x⁵/5! + … = Σ x^(2k+1)/(2k+1)!   (x ∈ ℝ)`, choices:['Σ x^(2k+1)/(2k+1)!','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k)/(2k)!','Σ xᵏ/k!']},
+{cat:'parcoeur', q:'DL de cosh x = ? (domaine)', a:`cosh x = 1 + x²/2! + x⁴/4! + … = Σ x^(2k)/(2k)!   (x ∈ ℝ)`, choices:['Σ x^(2k)/(2k)!','Σ (−1)ᵏ x^(2k)/(2k)!','Σ x^(2k+1)/(2k+1)!','Σ xᵏ/k!']},
+{cat:'parcoeur', q:'DL de arctan x = ? (domaine)', a:`arctan x = x − x³/3 + x⁵/5 − … = Σ (−1)ᵏ x^(2k+1)/(2k+1)   (x ∈ [−1,1])`, choices:['Σ (−1)ᵏ x^(2k+1)/(2k+1)','Σ (−1)ᵏ x^(2k+1)/(2k+1)!','Σ x^(2k+1)/(2k+1)','Σ (−1)ᵏ xᵏ/k']},
+{cat:'parcoeur', q:'DL de (1 + x)^α = ?', a:`(1+x)^α = 1 + αx + α(α−1)/2! x² + α(α−1)(α−2)/3! x³ + …`, choices:['1 + αx + α(α−1)/2! x² + …','1 + αx + α²x² + …','Σ xᵏ/k!','(1+x)^α ne se développe pas']},
+{cat:'parcoeur', q:'DL de tan x (premiers termes)', a:`tan x = x + x³/3 + 2x⁵/15 + …`, choices:['x + x³/3 + 2x⁵/15 + …','x − x³/3 + x⁵/5 − …','x + x³/3! + x⁵/5! + …','1 + x²/2 + …']},
+
 // ═══ couverture étendue (trigo / dérivées / intégrales / séries) ═══
 {cat:'trigo', q:'sin(π − x) = ?', a:`sin(π − x) = sin x`, choices:['sin x','−sin x','cos x','−cos x']},
 {cat:'trigo', q:'cos(π − x) = ?', a:`cos(π − x) = −cos x`, choices:['−cos x','cos x','sin x','−sin x']},
@@ -651,6 +749,59 @@ const CARDS = [
 {cat:'serie', q:'Rayon de convergence r', a:`1/r = limsup |aₖ|^(1/k)   (ou lim|aₖ/aₖ₊₁|)`, choices:['1/r = limsup |aₖ|^(1/k)','r = limsup |aₖ|^(1/k)','1/r = lim |aₖ|','r = Σ aₖ']},
 {cat:'serie', q:'Domaine de convergence d une série entière', a:`converge abs. pour |x − a| < r, diverge pour |x − a| > r`, choices:['conv |x−a|<r, div |x−a|>r','conv partout','conv |x−a|>r','diverge toujours']},
 {cat:'serie', q:'Polynôme de Taylor (ordre n) en a', a:`Σ_{k=0}^n f⁽ᵏ⁾(a)/k! (x − a)ᵏ`, choices:['Σ f⁽ᵏ⁾(a)/k! (x−a)ᵏ','Σ f⁽ᵏ⁾(a) (x−a)ᵏ','Σ f⁽ᵏ⁾(a)/k (x−a)ᵏ','Σ fᵏ(a)/k! xᵏ']},
+
+// ═══════════════ PRIMITIVES ═══════════════
+// ── Algébriques & rationnelles ──
+{cat:'prim', q:'∫ a dx = ?', a:`ax + C`, choices:['ax','x','a²x','a/x']},
+{cat:'prim', q:'∫ xⁿ dx = ? (n ≠ −1)', a:`xⁿ⁺¹/(n+1) + C`, choices:['xⁿ⁺¹/(n+1)','xⁿ⁺¹','x^(n−1)/(n−1)','n xⁿ⁻¹']},
+{cat:'prim', q:'∫ 1/xⁿ dx = ? (n ≠ 1)', a:`−1/((n−1)xⁿ⁻¹) + C`, choices:['−1/((n−1)xⁿ⁻¹)','1/((n+1)xⁿ⁺¹)','ln|xⁿ|','−n/xⁿ⁺¹']},
+{cat:'prim', q:'∫ 1/x dx = ?', a:`ln|x| + C`, choices:['ln|x|','−1/x²','1/x²','ln x²']},
+{cat:'prim', q:'∫ √x dx = ?', a:`(2/3) x√x + C = (2/3) x^(3/2) + C`, choices:['(2/3)x√x','(1/2)√x','x√x','3/(2√x)']},
+{cat:'prim', q:'∫ 1/√x dx = ?', a:`2√x + C`, choices:['2√x','1/(2√x)','√x','−1/(2√x)']},
+{cat:'prim', q:'∫ 1/((x−a)(x−b)) dx = ? (a ≠ b)', a:`1/(a−b) · ln|(x−a)/(x−b)| + C`, choices:['1/(a−b) ln|(x−a)/(x−b)|','ln|(x−a)(x−b)|','1/(a−b) ln|x−a|','arctan(...)']},
+{cat:'prim', q:'∫ 1/(x² + a²) dx = ?', a:`(1/a) arctan(x/a) + C`, choices:['(1/a) arctan(x/a)','arctan(x/a)','(1/a) arcsin(x/a)','ln(x²+a²)']},
+{cat:'prim', q:'∫ 1/(x² − a²) dx = ?', a:`(1/2a) ln|(x−a)/(x+a)| + C`, choices:['(1/2a) ln|(x−a)/(x+a)|','(1/a) arctan(x/a)','arcsin(x/a)','ln|x²−a²|']},
+// ── Exponentielle & logarithme ──
+{cat:'prim', q:'∫ eˣ dx = ?', a:`eˣ + C`, choices:['eˣ','xeˣ','eˣ/x','e^(x+1)']},
+{cat:'prim', q:'∫ aˣ dx = ?', a:`aˣ / ln(a) + C`, choices:['aˣ/ln(a)','aˣ ln(a)','aˣ','x a^(x−1)']},
+{cat:'prim', q:'∫ ln(x) dx = ?', a:`x(ln(x) − 1) + C`, choices:['x(ln x − 1)','x ln x','ln x / x','x ln x + x']},
+{cat:'prim', q:'∫ log_a(x) dx = ?', a:`x(log_a(x) − log_a(e)) + C`, choices:['x(log_a(x) − log_a(e))','x log_a(x)','x/(x ln a)','log_a(x)/x']},
+{cat:'prim', q:'∫ x ln(ax) dx = ?', a:`x²/4 · (2ln(ax) − 1) + C`, choices:['x²/4 · (2ln(ax)−1)','x² ln(ax)/2','x ln(ax) − x','x²/2 · ln(ax)']},
+// ── Trigonométriques ──
+{cat:'prim', q:'∫ sin(x) dx = ?', a:`−cos(x) + C`, choices:['−cos x','cos x','sin x','−sin x']},
+{cat:'prim', q:'∫ cos(x) dx = ?', a:`sin(x) + C`, choices:['sin x','−sin x','cos x','−cos x']},
+{cat:'prim', q:'∫ tan(x) dx = ?', a:`−ln|cos(x)| + C`, choices:['−ln|cos x|','ln|cos x|','ln|sin x|','−ln|sin x|']},
+{cat:'prim', q:'∫ cot(x) dx = ?', a:`ln|sin(x)| + C`, choices:['ln|sin x|','−ln|sin x|','ln|cos x|','−ln|cos x|']},
+{cat:'prim', q:'∫ sin²(x) dx = ?', a:`½(x − sin(x)cos(x)) + C`, choices:['½(x − sin x cos x)','½(x + sin x cos x)','−½ cos(2x)','x/2 − sin(2x)/4']},
+{cat:'prim', q:'∫ cos²(x) dx = ?', a:`½(x + sin(x)cos(x)) + C`, choices:['½(x + sin x cos x)','½(x − sin x cos x)','½ cos(2x)','x/2 + sin(2x)/4']},
+{cat:'prim', q:'∫ tan²(x) dx = ?', a:`tan(x) − x + C`, choices:['tan x − x','tan x + x','tan²x/2','−cot x − x']},
+{cat:'prim', q:'∫ cot²(x) dx = ?', a:`−cot(x) − x + C`, choices:['−cot x − x','−cot x + x','cot x − x','−tan x − x']},
+{cat:'prim', q:'∫ 1/sin²(x) dx = ?', a:`−cot(x) + C`, choices:['−cot x','cot x','tan x','−tan x']},
+{cat:'prim', q:'∫ 1/cos²(x) dx = ?', a:`tan(x) + C`, choices:['tan x','−cot x','cot x','−tan x']},
+{cat:'prim', q:'∫ 1/sin(x) dx = ?', a:`ln|(1 − cos x)/sin x| + C`, choices:['ln|(1−cos x)/sin x|','−ln|sin x|','ln|cos x|','−cot x']},
+{cat:'prim', q:'∫ 1/cos(x) dx = ?', a:`ln|(1 + sin x)/cos x| + C`, choices:['ln|(1+sin x)/cos x|','ln|cos x|','−ln|cos x|','tan x']},
+{cat:'prim', q:'∫ 1/(1 + sin x) dx = ?', a:`−cos(x)/(1 + sin x) + C`, choices:['−cos x/(1+sin x)','cos x/(1+sin x)','−sin x/(1+sin x)','tan(x/2)']},
+{cat:'prim', q:'∫ 1/(1 − sin x) dx = ?', a:`cos(x)/(1 − sin x) + C`, choices:['cos x/(1−sin x)','−cos x/(1−sin x)','sin x/(1−sin x)','−tan(x/2)']},
+{cat:'prim', q:'∫ 1/(1 + cos x) dx = ?', a:`sin(x)/(1 + cos x) + C`, choices:['sin x/(1+cos x)','−sin x/(1+cos x)','cos x/(1+cos x)','tan(x/2)']},
+{cat:'prim', q:'∫ 1/(1 − cos x) dx = ?', a:`−sin(x)/(1 − cos x) + C`, choices:['−sin x/(1−cos x)','sin x/(1−cos x)','−cos x/(1−cos x)','−cot(x/2)']},
+{cat:'prim', q:'∫ x sin(ax) dx = ?', a:`−(1/a)x cos(ax) + (1/a²) sin(ax) + C`, choices:['−(1/a)x cos(ax) + (1/a²)sin(ax)','(1/a)x cos(ax) + (1/a²)sin(ax)','−x cos(ax)','(1/a²)(ax−1)sin(ax)']},
+{cat:'prim', q:'∫ x cos(ax) dx = ?', a:`(1/a)x sin(ax) + (1/a²) cos(ax) + C`, choices:['(1/a)x sin(ax) + (1/a²)cos(ax)','−(1/a)x sin(ax) + (1/a²)cos(ax)','x sin(ax)','(1/a²)(ax−1)cos(ax)']},
+// ── Trigonométriques inverses ──
+{cat:'prim', q:'∫ arcsin(x) dx = ?', a:`x arcsin(x) + √(1 − x²) + C`, choices:['x arcsin x + √(1−x²)','x arcsin x − √(1−x²)','arcsin x / x','x/(1−x²)']},
+{cat:'prim', q:'∫ arccos(x) dx = ?', a:`x arccos(x) − √(1 − x²) + C`, choices:['x arccos x − √(1−x²)','x arccos x + √(1−x²)','−arccos x / x','x/(1−x²)']},
+{cat:'prim', q:'∫ arctan(x) dx = ?', a:`x arctan(x) − ½ ln(1 + x²) + C`, choices:['x arctan x − ½ ln(1+x²)','x arctan x + ½ ln(1+x²)','arctan x / (1+x²)','x/(1+x²)']},
+{cat:'prim', q:'∫ arccot(x) dx = ?', a:`x arccot(x) + ½ ln(1 + x²) + C`, choices:['x arccot x + ½ ln(1+x²)','x arccot x − ½ ln(1+x²)','−arccot x / (1+x²)','x/(1+x²)']},
+// ── Hyperboliques ──
+{cat:'prim', q:'∫ sinh(x) dx = ?', a:`cosh(x) + C`, choices:['cosh x','−cosh x','sinh x','−sinh x']},
+{cat:'prim', q:'∫ cosh(x) dx = ?', a:`sinh(x) + C`, choices:['sinh x','−sinh x','cosh x','−cosh x']},
+{cat:'prim', q:'∫ tanh(x) dx = ?', a:`ln(cosh(x)) + C`, choices:['ln(cosh x)','−ln(cosh x)','ln(sinh x)','cosh x / sinh x']},
+{cat:'prim', q:'∫ coth(x) dx = ?', a:`ln|sinh(x)| + C`, choices:['ln|sinh x|','−ln|sinh x|','ln|cosh x|','coth²x/2']},
+// ── Radicaux ──
+{cat:'prim', q:'∫ 1/√(1 − x²) dx = ?', a:`arcsin(x) + C`, choices:['arcsin x','arctan x','arccos x','ln(1−x²)']},
+{cat:'prim', q:'∫ 1/√(x² + a) dx = ?', a:`ln|x + √(x² + a)| + C`, choices:['ln|x + √(x²+a)|','arctan(x/√a)','arcsin(x/√a)','√(x²+a)']},
+{cat:'prim', q:'∫ 1/√(r² − x²) dx = ?', a:`arcsin(x/r) + C`, choices:['arcsin(x/r)','(1/r) arcsin(x/r)','arctan(x/r)','arccos(x/r)']},
+{cat:'prim', q:'∫ √(x² + a) dx = ?', a:`½ x√(x²+a) + (a/2) ln|x + √(x²+a)| + C`, choices:['½x√(x²+a) + (a/2)ln|x+√(x²+a)|','√(x²+a)','x²/√(x²+a)','(2/3)(x²+a)^(3/2)']},
+{cat:'prim', q:'∫ √(r² − x²) dx = ?', a:`½ x√(r²−x²) + (r²/2) arcsin(x/r) + C`, choices:['½x√(r²−x²) + (r²/2)arcsin(x/r)','√(r²−x²)','(r²/2)arcsin(x/r)','(2/3)(r²−x²)^(3/2)']},
 
 ];
 

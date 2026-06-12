@@ -14,6 +14,7 @@
     --serie: #db2777;
     --prim:  #7c3aed;
     --dl:    #b45309;
+    --form:  #0284c7;
     --bg:      #f8fafc;
     --surface: #ffffff;
     --surface2: #f1f5f9;
@@ -59,6 +60,7 @@
   .filter-btn[data-cat="serie"].active { background: var(--serie); }
   .filter-btn[data-cat="prim"].active  { background: var(--prim); }
   .filter-btn[data-cat="dl"].active    { background: var(--dl); }
+  .filter-btn[data-cat="form"].active  { background: var(--form); }
   .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
   .icon-btn {
     padding: 6px 14px; border-radius: 8px;
@@ -109,6 +111,7 @@
   .tag-edo    { background: #dbeafe; color: var(--edo); }
   .tag-parcoeur { background: #ccfbf1; color: var(--parcoeur); }
   .tag-serie { background: #fce7f3; color: var(--serie); }
+  .tag-form  { background: #e0f2fe; color: var(--form); }
   .card-question { font-size: calc(0.95rem * var(--card-font-scale, 1)); font-weight: 600; line-height: 1.5; flex: 1; color: var(--text); }
   .card-hint { font-size: 0.73rem; color: var(--muted); margin-top: 8px; }
   .card-flip-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 8px; }
@@ -198,6 +201,7 @@
   <button class="filter-btn" data-cat="parcoeur" style="color:var(--parcoeur)">Par cœur</button>
   <button class="filter-btn" data-cat="prim" style="color:var(--prim)">Primitives</button>
   <button class="filter-btn" data-cat="dl" style="color:var(--dl)">Séries / DL</button>
+  <button class="filter-btn" data-cat="form" style="color:var(--form)">Formulaire</button>
   <div class="sep"></div>
   <button class="icon-btn active-mode" id="btn-mode-grid">⊞ Grille</button>
   <button class="icon-btn" id="btn-mode-scroll">☰ Défilement</button>
@@ -871,6 +875,127 @@ const CARDS = [
 {cat:'dl', q:'DL de 1/f(x) quand f(0)=1 : methode',
  a:`Ecrire 1/f(x) = 1/(1+h(x)) puis appliquer 1/(1+u) = 1-u+u^2-...\noù u = f(x)-1`,
  choices:['1/(1+u) avec u=f(x)-1','Deriver f','Integrer f','Taylor directement']},
+
+// ═══════════════ FORMULAIRE — Analyse II (ch.1–7) ═══════════════
+
+// — Ch.1 : EDO 1er ordre —
+{cat:'form', q:'EDO séparable : forme et méthode',
+ a:`Forme : y' = g(x)h(y)\nSéparer : h(y)dy = g(x)dx\nIntégrer : H(y) = G(x) + C\nIVP : H(y) = G(x) - G(x₀) + H(y₀)\nVérifier solutions singulières : zéros de h(y)`,
+ choices:['h(y)dy = g(x)dx puis intégrer','Trouver le facteur intégrant','Substitution v = y/x','Ansatz yp = Ae^(kx)']},
+
+{cat:'form', q:'EDO linéaire 1er ordre : solution complète',
+ a:`Forme : y' + a(x)y = b(x)\nA(x) = ∫a(x)dx  (primitive de a)\ny_hom = Ce^{-A(x)}\ny_p = e^{-A(x)} ∫ e^{A(x)} b(x) dx\nIVP : y(x) = y₀ e^{A(x₀)-A(x)} + e^{-A(x)} ∫_{x₀}^x e^{A(s)} b(s) ds\nFacteur intégrant : μ(x) = e^{A(x)}`,
+ choices:['y_hom = Ce^{-A(x)}, y_p par intégration','y_hom = Ce^{A(x)}','y_p = e^{A(x)} ∫ e^{-A(x)} b dx','Séparation des variables directe']},
+
+{cat:'form', q:'EDO d\'Euler homogène : substitution',
+ a:`Forme : y' = F(y/x)\nSubstitution : v = y/x,  y' = v + xv'\nEquation : xv' = F(v) - v  (séparable en v)\nRetour : y = xv`,
+ choices:['v = y/x, xv\' = F(v)-v','v = x/y','y = vx²','Facteur intégrant']},
+
+{cat:'form', q:'Équation de Bernoulli : substitution',
+ a:`Forme : y' + p(x)y = q(x)yⁿ  (n ≠ 0,1)\nSubstitution : z = y^{-(n-1)}\nObtient EDO linéaire en z : z' + (n-1)p(x)z = -(n-1)q(x)\nRetour : y = z^{-1/(n-1)}\nVérifier aussi y ≡ 0`,
+ choices:['z = y^{-(n-1)} → EDO linéaire','z = yⁿ','z = y^{n-1}','Séparable directement']},
+
+// — Ch.2 : EDO 2e ordre —
+{cat:'form', q:'EDO 2e ordre à coeff. constants : 3 cas selon Δ',
+ a:`ay'' + by' + cy = 0, équation caracté. aλ² + bλ + c = 0, Δ = b²-4ac\n\nΔ > 0 : λ₁≠λ₂ réels → y = C₁e^{λ₁x} + C₂e^{λ₂x}\nΔ = 0 : λ double  → y = (C₁ + C₂x)e^{λx}\nΔ < 0 : λ = μ±iσ  → y = e^{μx}(C₁cos(σx) + C₂sin(σx))\n\nλ₁,₂ = (-b ± √Δ)/(2a),  μ = -b/(2a),  σ = √(-Δ)/(2a)`,
+ choices:['Δ>0: 2 réels, Δ=0: double, Δ<0: complexes','Δ>0: complexes, Δ<0: réels','λ = b/a toujours','σ = b/(2a)']},
+
+{cat:'form', q:'Ansatz pour solution particulière : tableau complet',
+ a:`g(x) = polynôme deg n :\n  c≠0 → yp = poly deg n\n  c=0, b≠0 → poly deg n+1\n  b=c=0 → poly deg n+2\n\ng(x) = λe^{κx} :\n  κ non-racine → αe^{κx}\n  κ racine simple → αxe^{κx}\n  κ racine double → αx²e^{κx}\n\ng = λsin(ωx) ou λcos(ωx) → α sin(ωx) + β cos(ωx)\ng = e^{κx}(λsin+μcos) → e^{κx}(α sin+β cos)\ng = e^{κx}(λsin+μcos), κ±iω racine → xe^{κx}(α sin+β cos)`,
+ choices:['Degré+1 si c=0, multiplier par x si résonance','Toujours poly même degré','Toujours αe^{κx}','Jamais x²e^{κx}']},
+
+{cat:'form', q:'Wronskien et réduction d\'ordre',
+ a:`W[y₁,y₂](x) = y₁y₂' - y₁'y₂\nW ≠ 0 ⟺ y₁,y₂ linéairement indépendantes\nAbel : W(x) = C·e^{-A₁(x)},  A₁ = ∫a₁ dx\n\nRéduction d'ordre (y₁ connue) :\ny₂(x) = y₁(x) ∫ e^{-A₁(x)}/y₁(x)² dx`,
+ choices:['W = y₁y₂\' - y₁\'y₂','W = y₁y₂\' + y₁\'y₂','W = y₁\'y₂\' - y₁y₂','W = y₁/y₂']},
+
+{cat:'form', q:'Variation des constantes (2e ordre)',
+ a:`{y₁,y₂} base de Wronskien W = y₁y₂'-y₁'y₂\nyp = C₁(x)y₁ + C₂(x)y₂ avec :\nC₁(x) = -∫ y₂(x)b(x)/W(x) dx\nC₂(x) =  ∫ y₁(x)b(x)/W(x) dx\nSolution générale : y = yp + c₁y₁ + c₂y₂`,
+ choices:['C₁ = -∫y₂b/W, C₂ = ∫y₁b/W','C₁ = ∫y₁b/W, C₂ = -∫y₂b/W','C₁ = ∫y₂b/W','C₁ = y₂b/W directement']},
+
+{cat:'form', q:'Équation d\'Euler-Cauchy : substitution',
+ a:`Forme : ax²y'' + bxy' + cy = g(x)\nSubstitution : t = ln x  (x = eᵗ)\nTransformation :\n  xy' → ŷ  (dérivée par t)\n  x²y'' → ÿ - ŷ\nObtient EDO à coeff. constants en t\nRetour : e^{λt} = x^λ,  e^{-t} = 1/x,  te^{-t} = (ln x)/x`,
+ choices:['t = ln x → xy\'=ŷ, x²y\'\'=ÿ-ŷ','t = x² → xy\'=2tŷ','t = 1/x','Directement par ansatz x^λ']},
+
+// — Ch.3 : Espace euclidien Rn —
+{cat:'form', q:'Produit scalaire, norme, distance dans Rn',
+ a:`⟨x,y⟩ = Σᵢ xᵢyᵢ\n‖x‖ = √⟨x,x⟩\nd(x,y) = ‖x-y‖\n\nCauchy-Schwarz : |⟨x,y⟩| ≤ ‖x‖‖y‖\nInégalité triangulaire : ‖x+y‖ ≤ ‖x‖+‖y‖\nPythagore (si ⟨x,y⟩=0) : ‖x+y‖² = ‖x‖² + ‖y‖²\nParallélogramme : ‖x+y‖² + ‖x-y‖² = 2‖x‖² + 2‖y‖²`,
+ choices:['⟨x,y⟩ = Σ xᵢyᵢ, Cauchy-Schwarz |⟨x,y⟩| ≤ ‖x‖‖y‖','⟨x,y⟩ = Σ xᵢ/yᵢ','‖x‖ = Σ|xᵢ|','Cauchy-Schwarz : ⟨x,y⟩ ≤ ‖x‖+‖y‖']},
+
+{cat:'form', q:'Topologie dans Rn : ouvert, fermé, compact',
+ a:`Boule : B(a,r) = {x : ‖x-a‖ < r}\nOuvert U : ∀x∈U, ∃ε>0 : B(x,ε)⊂U\nFermé F : Rn\\F ouvert ⟺ xₖ→x et xₖ∈F ⟹ x∈F\n\nIntérieur Ṡ = plus grand ouvert ⊂ S\nAdhérence S̄ = plus petit fermé ⊃ S\nFrontière ∂S = S̄ \\ Ṡ\n\nHeine-Borel : K compact ⟺ K fermé et borné`,
+ choices:['Compact ⟺ fermé et borné (Heine-Borel)','Compact ⟺ ouvert et borné','Fermé ⟺ intérieur non vide','Tout ouvert est compact']},
+
+{cat:'form', q:'Courbes paramétriques : tangente et longueur',
+ a:`f : I → Rn, dérivable composante par composante\nVecteur tangent : f'(t₀) = (f₁'(t₀), ..., fₙ'(t₀))\nVecteur unitaire : T(t) = f'(t)/‖f'(t)‖  (si f'≠0)\nDroite tangente : L(s) = f(t₀) + s·f'(t₀)\nLongueur d'arc : L(f) = ∫ₐᵇ ‖f'(t)‖ dt\n\nMouvement : v=ṙ, a=r̈, F=ma\nSi ‖r(t)‖ = cste → ⟨r'(t),r(t)⟩ = 0`,
+ choices:['L(f) = ∫‖f\'(t)‖dt, T = f\'/‖f\'‖','L(f) = ∫f\'(t)dt','T = f(t)/‖f(t)‖','L(f) = ∫‖f(t)‖dt']},
+
+// — Ch.4 : Fonctions de plusieurs variables —
+{cat:'form', q:'Gradient et dérivée directionnelle',
+ a:`Dérivée partielle : ∂f/∂xᵢ(x₀) = lim_{h→0} [f(x₀+heᵢ)-f(x₀)]/h\nGradient : ∇f(x₀) = (∂_{x₁}f, ..., ∂_{xₙ}f)ᵀ\n\nDérivée directionnelle (‖v‖=1) :\n∇_v f(x₀) = ⟨∇f(x₀), v⟩\n\n∇f ⊥ courbes/surfaces de niveau\n‖∇f‖ = taux de croissance maximal`,
+ choices:['∇_v f = ⟨∇f, v⟩  (‖v‖=1)','∇_v f = ‖∇f‖·‖v‖','∇_v f = ∂f/∂xᵢ','∇f pointe vers la décroissance']},
+
+{cat:'form', q:'Différentiabilité et plan tangent',
+ a:`f diff. en x₀ si ∃L∈Rn : lim_{h→0} [f(x₀+h)-f(x₀)-L·h]/‖h‖ = 0\nalors L = ∇f(x₀)\n\nHiérarchie : f∈C¹ ⟹ f diff. ⟹ f cont. ⟹ ∂xᵢf existent\n(réciproques fausses sauf C¹ ⟹ diff.)\n\nPlan tangent (f diff. en (x₀,y₀)) :\nz = f(x₀,y₀) + ∂xf(x₀,y₀)(x-x₀) + ∂yf(x₀,y₀)(y-y₀)\nNormale : n̄ = (∂xf, ∂yf, -1)`,
+ choices:['C¹ ⟹ diff. ⟹ cont., plan tangent z=f(a)+∇f·(x-a)','∂xᵢf existent ⟹ diff.','diff. ⟹ C¹','Plan tangent z = f + ∂xf + ∂yf']},
+
+{cat:'form', q:'Théorème de Schwarz et règle de la chaîne',
+ a:`Schwarz : si ∂_{xᵢxⱼ}f et ∂_{xⱼxᵢ}f existent et sont continues en a\n→ ∂_{xᵢxⱼ}f(a) = ∂_{xⱼxᵢ}f(a)  (dérivées mixtes égales)\n\nRègle de la chaîne (scalaire) :\nf = g(u₁,...,uₘ), uₖ = uₖ(x) :\n∂f/∂xᵢ = Σₖ (∂g/∂uₖ)(∂uₖ/∂xᵢ)`,
+ choices:['Schwarz : ∂ij = ∂ji si continues ; chaîne : ∂f/∂xᵢ = Σ ∂g/∂uₖ · ∂uₖ/∂xᵢ','Schwarz toujours vrai','Chaîne : ∂f/∂xᵢ = Σ ∂g/∂uₖ + ∂uₖ/∂xᵢ','Schwarz : ∂ij = -∂ji']},
+
+{cat:'form', q:'Développement de Taylor ordre 2 (plusieurs variables)',
+ a:`P₂(x,y) = f(a) + ∇f(a)·(x-a) + ½(x-a)ᵀ Hess f(a) (x-a)\n\noù Hess f(a) = matrice des dérivées secondes ∂_{xᵢxⱼ}f(a)`,
+ choices:['f(a) + ∇f·(x-a) + ½(x-a)ᵀ Hess f (x-a)','f(a) + Hess f·(x-a)','f(a) + ∇f·(x-a)²','f(a) + ½∇f·(x-a)']},
+
+{cat:'form', q:'Extrema et critère du Hessien (2 variables)',
+ a:`Point stationnaire : ∇f(a) = 0  (condition nécessaire)\nD = det Hess f(a,b) = ∂xxf · ∂yyf - (∂xyf)²\n\nD>0, ∂xxf>0 → minimum local\nD>0, ∂xxf<0 → maximum local\nD<0 → point selle\nD=0 → test non concluant\n\nCas général : valeurs propres de Hess f(a) :\ntous>0 : min ; tous<0 : max ; signes mixtes : selle`,
+ choices:['D = ∂xx∂yy - (∂xy)², D>0 & ∂xx>0 → min','D = ∂xx + ∂yy','D<0 → minimum','D = ∂xy² - ∂xx∂yy']},
+
+{cat:'form', q:'Théorème des fonctions implicites (TFI)',
+ a:`Si F∈C¹, F(a) = c et ∂_{xₙ}F(a) ≠ 0\n→ F(x) = c définit localement xₙ = f(x₁,...,x_{n-1}) près de a\n\nDérivation implicite :\n∂f/∂xᵢ = -(∂_{xᵢ}F)/(∂_{xₙ}F)\n\n(TFI garantit l\'existence locale, pas la formule explicite)`,
+ choices:['∂f/∂xᵢ = -(∂xᵢF)/(∂xₙF)','∂f/∂xᵢ = (∂xᵢF)/(∂xₙF)','∂f/∂xᵢ = ∂xₙF · ∂xᵢF','TFI donne toujours la formule explicite']},
+
+// — Ch.5 : Fonctions vectorielles —
+{cat:'form', q:'Matrice jacobienne',
+ a:`f : E⊂Rn → Rm, f = (f₁,...,fₘ)\nJ_f(a) ∈ R^{m×n} :\nLigne i = ∇fᵢ(a)ᵀ\nColonne j = ∂_{xⱼ}f(a)\n\nJ_f(a)_{ij} = ∂_{xⱼ}fᵢ(a)\n\nLinéarisation : t(x) = f(a) + J_f(a)(x-a)`,
+ choices:['J_f_{ij} = ∂_{xⱼ}fᵢ, ligne i = ∇fᵢᵀ','J_f_{ij} = ∂_{xᵢ}fⱼ','Ligne j = ∇fᵢᵀ','J_f ∈ R^{n×m}']},
+
+{cat:'form', q:'Règle de la chaîne vectorielle et multiplicateurs de Lagrange',
+ a:`Règle de la chaîne : J_{f∘g}(a) = J_f(g(a)) · J_g(a)\n(q×n) = (q×p)·(p×n)\n\nCas scalaire (q=1) : ∇(f∘g)(a) = J_g(a)ᵀ ∇f(g(a))\n\nLagrange (k contraintes gᵢ(x) = cᵢ) :\n∇f(a) = Σᵢ λᵢ ∇gᵢ(a)\nSystème n+k équations, n+k inconnues (x,λ)\nλᵢ = multiplicateurs (pas des extrema !)`,
+ choices:['J_{f∘g} = J_f·J_g ; Lagrange : ∇f = Σλᵢ∇gᵢ','J_{f∘g} = J_g·J_f','Lagrange : ∇f = λ∇f','J_{f∘g} = J_f + J_g']},
+
+// — Ch.6 : Intégrales doubles —
+{cat:'form', q:'Fubini (intégrale double) : rectangle et domaine général',
+ a:`Rectangle R = [a,b]×[c,d] :\n∬_R f = ∫_c^d ∫_a^b f dx dy = ∫_a^b ∫_c^d f dy dx\n\nTransches verticales :\n∬_D f = ∫_a^b ∫_{φ₁(x)}^{φ₂(x)} f dy dx\n\nTransches horizontales :\n∬_D f = ∫_c^d ∫_{ψ₁(y)}^{ψ₂(y)} f dx dy`,
+ choices:['∫_a^b ∫_{φ₁(x)}^{φ₂(x)} f dy dx (tranches verticales)','∬ f = ∫f dx + ∫f dy','Fubini uniquement sur rectangles','∬ f = (∫f dx)(∫f dy)']},
+
+{cat:'form', q:'Changement de variables (intégrale double)',
+ a:`∬_D f(x,y) dx dy = ∬_E f(Φ(u,v)) |det J_Φ(u,v)| du dv\n\nJ_Φ = | ∂ᵤx  ∂ᵥx |\n       | ∂ᵤy  ∂ᵥy |\n\nParallélogramme : Φ(u,v) = A + u·e₁ + v·e₂, (u,v)∈[0,1]²\nToujours prendre |det J|`,
+ choices:['f(Φ(u,v))|det J_Φ| du dv','f(Φ(u,v)) du dv','f(Φ(u,v))(det J_Φ)² du dv','f(x,y)/|det J| du dv']},
+
+{cat:'form', q:'Coordonnées polaires (intégrale double)',
+ a:`x = r cosθ,  y = r sinθ\ndx dy = r dr dθ  (Jacobien = r)\n\n∬_D f = ∬_E f(r cosθ, r sinθ) · r dr dθ\n\nIdentités utiles :\nx² + y² = r²\nx² - y² = r² cos2θ\nxy = (r²/2) sin2θ\n\nAngles clés : y=x,x≥0 → θ=π/4 ; y=√3·x → θ=π/3`,
+ choices:['dx dy = r dr dθ','dx dy = dr dθ','dx dy = r² dr dθ','dx dy = (1/r) dr dθ']},
+
+{cat:'form', q:'Applications des intégrales doubles',
+ a:`Aire(D) = ∬_D 1\nValeur moyenne : f̄ = (1/Aire) ∬_D f\nMasse : M = ∬_D δ(x,y) dx dy\nCentre de masse : x̄ = (1/M)∬_D x·δ,  ȳ = (1/M)∬_D y·δ\n\nSymétrie : D symétrique/axe y et δ(-x,y)=δ(x,y) ⟹ x̄ = 0`,
+ choices:['M=∬δ, x̄=(1/M)∬xδ, ȳ=(1/M)∬yδ','M=∬δ², x̄=∬xδ','Aire=∬x dx dy','x̄=(1/M)∬δ']},
+
+// — Ch.7 : Intégrales triples —
+{cat:'form', q:'Fubini 3D et méthode des tranches',
+ a:`∭_S f dV : 6 ordres d'intégration possibles\n\nTransches : ∭_S f = ∫_α^β (∬_{D(z)} f dx dy) dz\n\nRègle des bornes :\n  bornes constantes → variable extérieure\n  bornes = fct d'1 variable → variable du milieu\n  bornes = fct de 2 variables → variable intérieure`,
+ choices:['Bornes ctes → ext., fct(1 var) → milieu, fct(2 var) → int.','Toujours intégrer en z en dernier','Tranches = ∫_α^β ∫ f dy dx','Fubini invalide en 3D']},
+
+{cat:'form', q:'Coordonnées cylindriques',
+ a:`x = r cosθ,  y = r sinθ,  z = z\ndV = r dr dθ dz  (|det J| = r)\n\nUtile pour domaines à symétrie de révolution autour de z`,
+ choices:['dV = r dr dθ dz','dV = r² dr dθ dz','dV = dr dθ dz','dV = r sin θ dr dθ dz']},
+
+{cat:'form', q:'Coordonnées sphériques (convention EPFL)',
+ a:`x = r sinφ cosθ\ny = r sinφ sinθ\nz = r cosφ\ndV = r² sinφ dr dφ dθ\n\nPlages : r≥0, φ∈[0,π], θ∈[0,2π]\n\nz≥0 : φ∈[0,π/2]  |  z≤0 : φ∈[π/2,π]\nx≥0 : θ∈[-π/2,π/2]\n\nCône z = k√(x²+y²) → φ = arctan(1/k)\nEx : z=√(x²+y²) → φ=π/4 ; z=√3·√(x²+y²) → φ=π/6`,
+ choices:['dV = r² sinφ dr dφ dθ, z=r cosφ','dV = r² dr dφ dθ','z = r sinφ','dV = r sinφ dr dφ dθ']},
+
+{cat:'form', q:'Applications des intégrales triples',
+ a:`Volume = ∭_S 1  (boule R : 4πR³/3)\nMasse : M = ∭_S δ\nCentre de masse :\n  x̄ = M_{yz}/M,  ȳ = M_{xz}/M,  z̄ = M_{xy}/M\n\noù :\nM_{yz} = ∭ x·δ  (contient x !)\nM_{xz} = ∭ y·δ  (contient y !)\nM_{xy} = ∭ z·δ  (contient z !)\n\n⚠ Piège : M_{yz} contient x, M_{xz} contient y (croisé !)`,
+ choices:['M_yz=∭xδ, M_xz=∭yδ, M_xy=∭zδ (croisé !)','M_yz=∭yδ, M_xz=∭xδ','x̄=M_xy/M','Vol(boule R) = (4/3)πR²']},
 
 ];
 

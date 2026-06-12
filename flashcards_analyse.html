@@ -76,7 +76,7 @@
   .progress-label { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
 
   /* GRID */
-  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 20px 32px 48px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--card-min, 300px)), 1fr)); gap: 16px; padding: 20px 32px 48px; font-size: calc(1rem * var(--card-font-scale, 1)); }
   .cards-scroll { display: none; flex-direction: column; align-items: center; gap: 0; padding: 28px 32px 60px; }
   .cards-scroll.active { display: flex; }
   .cards-grid.hidden { display: none; }
@@ -98,7 +98,7 @@
 
   /* FLIP CARD */
   .card-wrap { perspective: 1200px; }
-  .card { width: 100%; min-height: 190px; position: relative; transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(.4,0,.2,1); cursor: pointer; border-radius: 14px; }
+  .card { width: 100%; min-height: calc(190px * var(--card-font-scale, 1)); position: relative; transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(.4,0,.2,1); cursor: pointer; border-radius: 14px; }
   .card.flipped { transform: rotateY(180deg); }
   .card-face { position: absolute; inset: 0; border-radius: 14px; padding: 18px 20px; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); }
   .card-back { transform: rotateY(180deg); background: var(--surface2); }
@@ -109,10 +109,10 @@
   .tag-edo    { background: #dbeafe; color: var(--edo); }
   .tag-parcoeur { background: #ccfbf1; color: var(--parcoeur); }
   .tag-serie { background: #fce7f3; color: var(--serie); }
-  .card-question { font-size: 0.95rem; font-weight: 600; line-height: 1.5; flex: 1; color: var(--text); }
+  .card-question { font-size: calc(0.95rem * var(--card-font-scale, 1)); font-weight: 600; line-height: 1.5; flex: 1; color: var(--text); }
   .card-hint { font-size: 0.73rem; color: var(--muted); margin-top: 8px; }
   .card-flip-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 8px; }
-  .card-answer { font-size: 0.85rem; line-height: 1.7; flex: 1; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .card-answer { font-size: calc(0.85rem * var(--card-font-scale, 1)); line-height: 1.7; flex: 1; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
   .card-footer { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
   .vote-btn { padding: 4px 12px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
   .vote-btn:hover { border-color: #94a3b8; color: var(--text); }
@@ -203,6 +203,8 @@
   <button class="icon-btn" id="btn-mode-scroll">☰ Défilement</button>
   <button class="icon-btn" id="btn-mode-qcm">✎ QCM</button>
   <div class="toolbar-right">
+    <button class="icon-btn" id="btn-zoom-out" title="Réduire">A−</button>
+    <button class="icon-btn" id="btn-zoom-in"  title="Agrandir">A+</button>
     <button class="icon-btn" id="btn-shuffle">🔀 Mélanger</button>
     <button class="icon-btn" id="btn-unshuffle">↕ Ordre original</button>
     <button class="icon-btn" id="btn-study">▶ Mode étude</button>
@@ -1129,6 +1131,19 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 // ══════════════════════════════════════════════════════
 //  SHUFFLE & RESET
 // ══════════════════════════════════════════════════════
+// ── ZOOM ──
+let cardScale = parseFloat(localStorage.getItem('fc-card-scale') || '1');
+function applyScale(s) {
+  cardScale = Math.min(2, Math.max(0.7, s));
+  localStorage.setItem('fc-card-scale', cardScale);
+  const root = document.documentElement;
+  root.style.setProperty('--card-font-scale', cardScale);
+  root.style.setProperty('--card-min', Math.round(300 * cardScale) + 'px');
+}
+applyScale(cardScale);
+document.getElementById('btn-zoom-in').addEventListener('click',  () => { applyScale(cardScale + 0.15); });
+document.getElementById('btn-zoom-out').addEventListener('click', () => { applyScale(cardScale - 0.15); });
+
 document.getElementById('btn-shuffle').addEventListener('click', () => {
   shuffledIndices = shuffle([...CARDS.keys()]); renderCurrent();
 });

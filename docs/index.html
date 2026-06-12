@@ -875,16 +875,39 @@ const CARDS = [
 ];
 
 // ══════════════════════════════════════════════════════
-//  STATE
+//  STATE — clé stable basée sur la question (résiste aux push)
 // ══════════════════════════════════════════════════════
-let state = JSON.parse(localStorage.getItem('fc-analyse-v2') || '{}');
+function cardKey(c) {
+  // Hash simple et stable basé sur cat + question
+  const s = c.cat + '|' + c.q;
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; }
+  return h.toString(36);
+}
+// Migration : si l'ancien état (par index) existe, on le convertit
+(function migrateState() {
+  const raw = JSON.parse(localStorage.getItem('fc-analyse-v2') || '{}');
+  const isOldFormat = Object.keys(raw).some(k => /^\d+$/.test(k));
+  if (isOldFormat) {
+    const migrated = {};
+    Object.entries(raw).forEach(([k, v]) => {
+      const idx = parseInt(k);
+      if (!isNaN(idx) && CARDS[idx]) migrated[cardKey(CARDS[idx])] = v;
+    });
+    localStorage.setItem('fc-analyse-v3', JSON.stringify(migrated));
+    localStorage.removeItem('fc-analyse-v2');
+  }
+})();
+let state = JSON.parse(localStorage.getItem('fc-analyse-v3') || '{}');
 let currentFilter = 'all';
 let viewMode = 'grid';
 let shuffledIndices = [...CARDS.keys()];
 let studyQueue = [], studyIdx = 0, studyRevealed = false;
 let qcmCorrect = 0, qcmAnswered = 0;
 
-function save() { localStorage.setItem('fc-analyse-v2', JSON.stringify(state)); }
+function save() { localStorage.setItem('fc-analyse-v3', JSON.stringify(state)); }
+function getState(i) { return state[cardKey(CARDS[i])]; }
+function setState(i, v) { state[cardKey(CARDS[i])] = v; }
 function filteredIndices() {
   return shuffledIndices.filter(i => currentFilter === 'all' || CARDS[i].cat === currentFilter);
 }
@@ -902,7 +925,7 @@ function renderGrid() {
   if (!indices.length) { grid.innerHTML = '<div class="empty">Aucune carte dans cette catégorie.</div>'; return; }
   grid.innerHTML = '';
   indices.forEach(i => {
-    const c = CARDS[i], st = state[i];
+    const c = CARDS[i], st = getState(i);
     const wrap = document.createElement('div');
     wrap.className = 'card-wrap';
     wrap.innerHTML = `
@@ -936,7 +959,7 @@ function renderScroll() {
   if (!indices.length) { container.innerHTML = '<div class="empty">Aucune carte dans cette catégorie.</div>'; return; }
   container.innerHTML = '';
   indices.forEach((i, pos) => {
-    const c = CARDS[i], st = state[i];
+    const c = CARDS[i], st = getState(i);
     if (pos > 0) { const conn = document.createElement('div'); conn.className = 'scroll-connector'; container.appendChild(conn); }
     const item = document.createElement('div');
     item.className = 'scroll-item';
@@ -1072,7 +1095,7 @@ function bindVoteBtns(root) {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const idx = +btn.dataset.idx, action = btn.dataset.action;
-      state[idx] = (state[idx] === action) ? undefined : action;
+      setState(idx, getState(idx) === action ? undefined : action);
       save(); renderCurrent(); updateStats();
     });
   });
@@ -1168,7 +1191,7 @@ const modalNav = document.getElementById('modal-nav');
 
 document.getElementById('btn-study').addEventListener('click', () => {
   const all = filteredIndices();
-  const nonMastered = all.filter(i => state[i] !== 'ok');
+  const nonMastered = all.filter(i => getState(i) !== 'ok');
   if (nonMastered.length === 0) {
     studyQueue = all.slice(); studyIdx = 0;
     studyModal.classList.add('open'); showStudyCard(); return;
@@ -1206,7 +1229,7 @@ document.getElementById('modal-close').addEventListener('click', () => {
 function showStudyCard() {
   studyRevealed = false;
   if (studyIdx >= studyQueue.length) {
-    const ok = studyQueue.filter(i => state[i]==='ok').length;
+    const ok = studyQueue.filter(i => getState(i)==='ok').length;
     studyQ.innerHTML = `<span style="font-size:2rem">🎉</span><br><br>Session terminée !<br><span style="font-size:0.9rem;color:var(--muted)">${ok}/${studyQueue.length} maîtrisées</span>`;
     studyA.classList.remove('visible'); modalTag.innerHTML = ''; studyProg.textContent = '';
     modalNav.innerHTML = `<button class="nav-btn btn-reveal" onclick="document.getElementById('study-modal').classList.remove('open');renderCurrent();updateStats()">Fermer</button>`;
@@ -1231,8 +1254,8 @@ function revealStudy() {
     <button class="nav-btn btn-ko" id="s-ko">✗ À revoir</button>
     <button class="nav-btn btn-ok" id="s-ok">✓ Maîtrisé</button>
     <button class="nav-btn btn-skip" id="s-skip">→ Passer</button>`;
-  document.getElementById('s-ok').addEventListener('click', () => { state[i]='ok'; save(); studyIdx++; showStudyCard(); });
-  document.getElementById('s-ko').addEventListener('click', () => { state[i]='ko'; save(); studyIdx++; showStudyCard(); });
+  document.getElementById('s-ok').addEventListener('click', () => { setState(i,'ok'); save(); studyIdx++; showStudyCard(); });
+  document.getElementById('s-ko').addEventListener('click', () => { setState(i,'ko'); save(); studyIdx++; showStudyCard(); });
   document.getElementById('s-skip').addEventListener('click', () => { studyIdx++; showStudyCard(); });
 }
 

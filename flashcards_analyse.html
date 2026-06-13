@@ -122,6 +122,25 @@
   .vote-btn.ok { border-color: var(--deriv); color: var(--deriv); background: #d1fae5; }
   .vote-btn.ko { border-color: #ef4444; color: #ef4444; background: #fee2e2; }
   .empty { text-align: center; padding: 80px 32px; color: var(--muted); }
+  .del-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 10;
+    background: none; border: none; font-size: 0.85rem; cursor: pointer;
+    color: #cbd5e1; padding: 4px 6px; border-radius: 6px;
+    opacity: 0; transition: opacity 0.15s, color 0.15s;
+    line-height: 1;
+  }
+  .card-wrap:hover .del-btn { opacity: 1; }
+  .del-btn:hover { color: #ef4444 !important; background: #fee2e2; opacity: 1; }
+  /* Toast */
+  #del-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 12px;
+    font-size: 0.85rem; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 500;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  #del-toast.show { opacity: 1; pointer-events: auto; }
+  #del-toast button { background: #6ee7b7; color: #064e3b; border: none; border-radius: 7px; padding: 4px 12px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 
   /* ── QCM MODE ── */
   .cards-qcm { display: none; flex-direction: column; align-items: center; gap: 0; padding: 28px 32px 60px; }
@@ -260,6 +279,7 @@
   <div class="toolbar-right">
     <button class="icon-btn" id="btn-zoom-out" title="Réduire">A−</button>
     <button class="icon-btn" id="btn-zoom-in"  title="Agrandir">A+</button>
+    <button class="icon-btn" id="btn-restore" style="display:none;color:#ef4444;border-color:#fca5a5">🗑 Restaurer (<span id="hidden-count">0</span>)</button>
     <button class="icon-btn" id="btn-shuffle">🔀 Mélanger</button>
     <button class="icon-btn" id="btn-unshuffle">↕ Ordre original</button>
     <button class="icon-btn" id="btn-study">▶ Mode étude</button>
@@ -278,6 +298,8 @@
 <div class="cards-grid" id="cards-grid"></div>
 <div class="cards-scroll" id="cards-scroll"></div>
 <div class="cards-qcm" id="cards-qcm"></div>
+
+<div id="del-toast">Carte masquée <button id="del-undo">Annuler</button></div>
 
 <!-- SWIPE OVERLAY -->
 <div id="swipe-overlay">
@@ -1104,6 +1126,7 @@ function cardKey(c) {
   }
 })();
 let state = JSON.parse(localStorage.getItem('fc-analyse-v3') || '{}');
+let hidden = new Set(JSON.parse(localStorage.getItem('fc-analyse-hidden') || '[]'));
 let currentFilter = 'all';
 let viewMode = 'grid';
 let shuffledIndices = [...CARDS.keys()];
@@ -1111,10 +1134,19 @@ let studyQueue = [], studyIdx = 0, studyRevealed = false;
 let qcmCorrect = 0, qcmAnswered = 0;
 
 function save() { localStorage.setItem('fc-analyse-v3', JSON.stringify(state)); }
+function saveHidden() { localStorage.setItem('fc-analyse-hidden', JSON.stringify([...hidden])); }
 function getState(i) { return state[cardKey(CARDS[i])]; }
 function setState(i, v) { state[cardKey(CARDS[i])] = v; }
+function isHidden(i) { return hidden.has(cardKey(CARDS[i])); }
 function filteredIndices() {
-  return shuffledIndices.filter(i => currentFilter === 'all' || CARDS[i].cat === currentFilter);
+  return shuffledIndices.filter(i =>
+    !isHidden(i) && (currentFilter === 'all' || CARDS[i].cat === currentFilter)
+  );
+}
+function updateRestoreBtn() {
+  const btn = document.getElementById('btn-restore');
+  document.getElementById('hidden-count').textContent = hidden.size;
+  btn.style.display = hidden.size > 0 ? '' : 'none';
 }
 const catLabels = {trigo:'Trigonométrie', deriv:'Dérivées', integ:'Intégrales', edo:'EDO', parcoeur:'Par cœur', serie:'Séries'};
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1135,6 +1167,7 @@ function renderGrid() {
     wrap.className = 'card-wrap';
     wrap.innerHTML = `
       <div class="card ${st?'flipped':''}" data-idx="${i}">
+        <button class="del-btn" data-del="${i}" title="Masquer cette carte">🗑</button>
         <div class="card-face card-front">
           <div>${tagHtml(c.cat)}<div class="card-question">${esc(c.q)}</div>${c.hint?`<div class="card-hint">💡 ${esc(c.hint)}</div>`:''}</div>
           <div class="card-flip-hint">Cliquer pour voir la réponse ▼</div>
@@ -1150,7 +1183,10 @@ function renderGrid() {
     grid.appendChild(wrap);
   });
   grid.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', e => { if (e.target.closest('.vote-btn')) return; card.classList.toggle('flipped'); });
+    card.addEventListener('click', e => { if (e.target.closest('.vote-btn') || e.target.closest('.del-btn')) return; card.classList.toggle('flipped'); });
+  });
+  grid.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); hideCard(parseInt(btn.dataset.del)); });
   });
   bindVoteBtns(grid);
 }
@@ -1343,6 +1379,36 @@ function updateStats() {
   document.getElementById('progress-fill').style.width = pct+'%';
   document.getElementById('progress-label').textContent = `${ok} / ${total} cartes maîtrisées (${pct}%)`;
 }
+
+// ══════════════════════════════════════════════════════
+//  HIDE / RESTORE CARDS
+// ══════════════════════════════════════════════════════
+let toastTimer = null, lastHiddenKey = null;
+const toast = document.getElementById('del-toast');
+
+function hideCard(i) {
+  const k = cardKey(CARDS[i]);
+  hidden.add(k);
+  lastHiddenKey = k;
+  saveHidden(); updateRestoreBtn(); renderCurrent(); updateStats();
+  // show toast
+  clearTimeout(toastTimer);
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => { toast.classList.remove('show'); lastHiddenKey = null; }, 4000);
+}
+
+document.getElementById('del-undo').addEventListener('click', () => {
+  if (lastHiddenKey) { hidden.delete(lastHiddenKey); lastHiddenKey = null; }
+  saveHidden(); updateRestoreBtn(); renderCurrent(); updateStats();
+  toast.classList.remove('show'); clearTimeout(toastTimer);
+});
+
+document.getElementById('btn-restore').addEventListener('click', () => {
+  if (!confirm(`Restaurer les ${hidden.size} cartes masquées ?`)) return;
+  hidden.clear(); saveHidden(); updateRestoreBtn(); renderCurrent(); updateStats();
+});
+
+updateRestoreBtn();
 
 // ══════════════════════════════════════════════════════
 //  FILTERS

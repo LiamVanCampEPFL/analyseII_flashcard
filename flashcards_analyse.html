@@ -162,10 +162,61 @@
   .modal-close { position: absolute; top: 16px; right: 16px; background: var(--surface2); border: none; color: var(--muted); font-size: 1rem; cursor: pointer; border-radius: 8px; width: 32px; height: 32px; }
   .modal-close:hover { background: var(--border); color: var(--text); }
   .modal-tag { margin-bottom: 14px; }
-  .study-question { font-size: 1.2rem; font-weight: 700; line-height: 1.5; min-height: 70px; color: var(--text); }
+  .study-question { font-size: calc(1.2rem * var(--card-font-scale, 1)); font-weight: 700; line-height: 1.5; min-height: 70px; color: var(--text); }
   .study-answer { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--border); display: none; }
   .study-answer.visible { display: block; }
-  .study-answer-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
+  .study-answer-text { font-size: calc(0.9rem * var(--card-font-scale, 1)); line-height: 1.8; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono', 'Courier New', monospace; }
+
+  /* ── SWIPE MODE ── */
+  #swipe-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: var(--bg); flex-direction: column; overflow: hidden;
+    touch-action: none; user-select: none;
+  }
+  #swipe-overlay.open { display: flex; }
+  #swipe-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: var(--surface);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  #swipe-progress-text { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+  #swipe-close { background: var(--surface2); border: none; border-radius: 8px; width: 34px; height: 34px; font-size: 1rem; cursor: pointer; color: var(--muted); }
+  #swipe-progress-bar { height: 4px; background: var(--border); flex-shrink: 0; }
+  #swipe-progress-fill { height: 100%; background: linear-gradient(90deg, var(--trigo), var(--edo)); transition: width 0.3s; }
+  #swipe-arena {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 20px; position: relative; overflow: hidden;
+  }
+  #swipe-card {
+    width: 100%; max-width: 560px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 32px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    position: relative; transition: transform 0.15s, opacity 0.15s;
+    will-change: transform;
+  }
+  #swipe-card-tag { margin-bottom: 14px; }
+  #swipe-card-q { font-size: calc(1.15rem * var(--card-font-scale, 1)); font-weight: 700; line-height: 1.5; color: var(--text); margin-bottom: 10px; }
+  #swipe-card-hint { font-size: 0.78rem; color: var(--muted); }
+  #swipe-divider { height: 1px; background: var(--border); margin: 20px 0; display: none; }
+  #swipe-card-a { font-size: calc(0.88rem * var(--card-font-scale, 1)); line-height: 1.8; white-space: pre-wrap; color: #334155; font-family: 'Fira Mono','Courier New',monospace; display: none; }
+  #swipe-tap-hint { text-align: center; margin-top: 16px; font-size: 0.78rem; color: var(--muted); }
+  .swipe-label {
+    position: absolute; top: 20px; padding: 8px 18px; border-radius: 10px;
+    font-size: 1rem; font-weight: 800; opacity: 0; transition: opacity 0.1s;
+    pointer-events: none; letter-spacing: 0.05em;
+  }
+  #swipe-label-ok  { right: 20px; background: #d1fae5; color: #065f46; border: 2px solid #6ee7b7; }
+  #swipe-label-ko  { left: 20px;  background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; }
+  #swipe-footer {
+    padding: 16px 20px 24px; background: var(--surface);
+    border-top: 1px solid var(--border); flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  #swipe-hint-text { font-size: 0.78rem; color: var(--muted); }
+  .swipe-btns { display: flex; gap: 14px; }
+  .swipe-btn { padding: 10px 28px; border-radius: 12px; border: none; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+  .swipe-btn-ko { background: #fee2e2; color: #991b1b; }
+  .swipe-btn-ok { background: #d1fae5; color: #065f46; }
   .modal-nav { display: flex; gap: 10px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
   .nav-btn { padding: 9px 22px; border-radius: 10px; border: none; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
   .btn-reveal { background: var(--text); color: #fff; }
@@ -212,6 +263,7 @@
     <button class="icon-btn" id="btn-shuffle">🔀 Mélanger</button>
     <button class="icon-btn" id="btn-unshuffle">↕ Ordre original</button>
     <button class="icon-btn" id="btn-study">▶ Mode étude</button>
+    <button class="icon-btn" id="btn-swipe">📱 Swipe</button>
     <button class="icon-btn" id="btn-reset">↺ Reset</button>
   </div>
 </div>
@@ -226,6 +278,34 @@
 <div class="cards-grid" id="cards-grid"></div>
 <div class="cards-scroll" id="cards-scroll"></div>
 <div class="cards-qcm" id="cards-qcm"></div>
+
+<!-- SWIPE OVERLAY -->
+<div id="swipe-overlay">
+  <div id="swipe-header">
+    <span id="swipe-progress-text">Carte 0 / 0</span>
+    <button id="swipe-close">✕</button>
+  </div>
+  <div id="swipe-progress-bar"><div id="swipe-progress-fill" style="width:0%"></div></div>
+  <div id="swipe-arena">
+    <div id="swipe-card">
+      <span class="swipe-label" id="swipe-label-ok">✓ MAÎTRISÉ</span>
+      <span class="swipe-label" id="swipe-label-ko">✗ À REVOIR</span>
+      <div id="swipe-card-tag"></div>
+      <div id="swipe-card-q"></div>
+      <div id="swipe-card-hint"></div>
+      <div id="swipe-divider"></div>
+      <div id="swipe-card-a"></div>
+      <div id="swipe-tap-hint">Appuie pour voir la réponse</div>
+    </div>
+  </div>
+  <div id="swipe-footer">
+    <div id="swipe-hint-text">← Gauche = Maîtrisé &nbsp;·&nbsp; Droite → = À revoir</div>
+    <div class="swipe-btns">
+      <button class="swipe-btn swipe-btn-ko" id="swipe-btn-ko">✗ À revoir</button>
+      <button class="swipe-btn swipe-btn-ok" id="swipe-btn-ok">✓ Maîtrisé</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="study-modal">
   <div class="modal">
@@ -1390,6 +1470,197 @@ document.addEventListener('keydown', e => {
   if (e.key===' ' && !studyRevealed) { e.preventDefault(); revealStudy(); }
   if (e.key==='ArrowRight' && studyRevealed) document.getElementById('s-ok')?.click();
   if (e.key==='ArrowLeft'  && studyRevealed) document.getElementById('s-ko')?.click();
+});
+
+// ══════════════════════════════════════════════════════
+//  SWIPE MODE
+// ══════════════════════════════════════════════════════
+let swipeQueue = [], swipeIdx = 0, swipeRevealed = false;
+const swipeOverlay  = document.getElementById('swipe-overlay');
+const swipeCardEl   = document.getElementById('swipe-card');
+const swipeCardQ    = document.getElementById('swipe-card-q');
+const swipeCardA    = document.getElementById('swipe-card-a');
+const swipeCardHint = document.getElementById('swipe-card-hint');
+const swipeCardTag  = document.getElementById('swipe-card-tag');
+const swipeDivider  = document.getElementById('swipe-divider');
+const swipeTapHint  = document.getElementById('swipe-tap-hint');
+const swipeProgText = document.getElementById('swipe-progress-text');
+const swipeProgFill = document.getElementById('swipe-progress-fill');
+const swipeLabelOk  = document.getElementById('swipe-label-ok');
+const swipeLabelKo  = document.getElementById('swipe-label-ko');
+
+function openSwipeMode(queue) {
+  swipeQueue = queue; swipeIdx = 0;
+  swipeOverlay.classList.add('open');
+  showSwipeCard();
+}
+
+function showSwipeCard() {
+  swipeRevealed = false;
+  swipeCardEl.style.transform = '';
+  swipeCardEl.style.opacity = '';
+  swipeLabelOk.style.opacity = '0';
+  swipeLabelKo.style.opacity = '0';
+
+  if (swipeIdx >= swipeQueue.length) {
+    const ok = swipeQueue.filter(i => getState(i)==='ok').length;
+    swipeCardQ.innerHTML = `<span style="font-size:2.5rem">🎉</span><br><br>Session terminée !`;
+    swipeCardA.style.display = 'none';
+    swipeDivider.style.display = 'none';
+    swipeCardHint.innerHTML = `<span style="color:var(--muted);font-size:0.9rem">${ok} / ${swipeQueue.length} maîtrisées</span>`;
+    swipeCardTag.innerHTML = '';
+    swipeTapHint.textContent = '';
+    swipeProgText.textContent = `${swipeIdx} / ${swipeQueue.length}`;
+    swipeProgFill.style.width = '100%';
+    document.getElementById('swipe-footer').innerHTML = `<button class="swipe-btn swipe-btn-ok" onclick="swipeOverlay.classList.remove('open');renderCurrent();updateStats()">Fermer</button>`;
+    return;
+  }
+
+  const i = swipeQueue[swipeIdx], c = CARDS[i];
+  swipeProgText.textContent = `Carte ${swipeIdx+1} / ${swipeQueue.length}`;
+  swipeProgFill.style.width = ((swipeIdx / swipeQueue.length) * 100) + '%';
+  swipeCardTag.innerHTML = tagHtml(c.cat);
+  swipeCardQ.textContent = c.q;
+  swipeCardHint.textContent = c.hint ? '💡 ' + c.hint : '';
+  swipeCardA.innerHTML = fmtAns(c.a);
+  swipeCardA.style.display = 'none';
+  swipeDivider.style.display = 'none';
+  swipeTapHint.textContent = 'Appuie pour voir la réponse';
+  // reset footer
+  const footer = document.getElementById('swipe-footer');
+  footer.innerHTML = `
+    <div id="swipe-hint-text">← Gauche = Maîtrisé &nbsp;·&nbsp; Droite → = À revoir</div>
+    <div class="swipe-btns">
+      <button class="swipe-btn swipe-btn-ko" id="swipe-btn-ko">✗ À revoir</button>
+      <button class="swipe-btn swipe-btn-ok" id="swipe-btn-ok">✓ Maîtrisé</button>
+    </div>`;
+  document.getElementById('swipe-btn-ok').addEventListener('click', () => swipeJudge('ok'));
+  document.getElementById('swipe-btn-ko').addEventListener('click', () => swipeJudge('ko'));
+}
+
+function swipeReveal() {
+  if (swipeRevealed) return;
+  swipeRevealed = true;
+  swipeCardA.style.display = 'block';
+  swipeDivider.style.display = 'block';
+  swipeTapHint.textContent = '← Glisse gauche = Maîtrisé · Droite → = À revoir';
+}
+
+function swipeJudge(verdict) {
+  if (!swipeRevealed) { swipeReveal(); return; }
+  const i = swipeQueue[swipeIdx];
+  setState(i, verdict); save();
+  // animate card out
+  const dir = verdict === 'ok' ? -1 : 1;
+  swipeCardEl.style.transition = 'transform 0.3s, opacity 0.3s';
+  swipeCardEl.style.transform = `translateX(${dir * 110}%) rotate(${dir * 15}deg)`;
+  swipeCardEl.style.opacity = '0';
+  setTimeout(() => {
+    swipeCardEl.style.transition = '';
+    swipeIdx++;
+    showSwipeCard();
+  }, 310);
+}
+
+// Tap to reveal
+swipeCardEl.addEventListener('click', e => {
+  if (!swipeRevealed) swipeReveal();
+});
+
+// Touch swipe
+let touchStartX = 0, touchStartY = 0, isDragging = false;
+swipeCardEl.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  isDragging = false;
+  swipeCardEl.style.transition = '';
+}, { passive: true });
+
+swipeCardEl.addEventListener('touchmove', e => {
+  if (!swipeRevealed) return;
+  const dx = e.touches[0].clientX - touchStartX;
+  const dy = e.touches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy)) { isDragging = true; e.preventDefault(); }
+  if (!isDragging) return;
+  const rot = dx / 15;
+  swipeCardEl.style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+  const ratio = Math.min(Math.abs(dx) / 120, 1);
+  if (dx < 0) {
+    swipeLabelOk.style.opacity = ratio;
+    swipeLabelKo.style.opacity = '0';
+  } else {
+    swipeLabelKo.style.opacity = ratio;
+    swipeLabelOk.style.opacity = '0';
+  }
+}, { passive: false });
+
+swipeCardEl.addEventListener('touchend', e => {
+  if (!swipeRevealed || !isDragging) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 80) {
+    swipeJudge(dx < 0 ? 'ok' : 'ko');
+  } else {
+    swipeCardEl.style.transition = 'transform 0.25s, opacity 0.25s';
+    swipeCardEl.style.transform = '';
+    swipeLabelOk.style.opacity = '0';
+    swipeLabelKo.style.opacity = '0';
+  }
+});
+
+// Mouse drag (desktop)
+let mouseStartX = 0, mouseDragging = false;
+swipeCardEl.addEventListener('mousedown', e => {
+  mouseStartX = e.clientX; mouseDragging = false;
+  swipeCardEl.style.transition = '';
+});
+document.addEventListener('mousemove', e => {
+  if (e.buttons !== 1 || !swipeRevealed) return;
+  const dx = e.clientX - mouseStartX;
+  if (Math.abs(dx) > 5) mouseDragging = true;
+  if (!mouseDragging) return;
+  const rot = dx / 15;
+  swipeCardEl.style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+  const ratio = Math.min(Math.abs(dx) / 120, 1);
+  if (dx < 0) { swipeLabelOk.style.opacity = ratio; swipeLabelKo.style.opacity = '0'; }
+  else { swipeLabelKo.style.opacity = ratio; swipeLabelOk.style.opacity = '0'; }
+});
+document.addEventListener('mouseup', e => {
+  if (!mouseDragging || !swipeRevealed) { mouseDragging = false; return; }
+  mouseDragging = false;
+  const dx = e.clientX - mouseStartX;
+  if (Math.abs(dx) > 80) swipeJudge(dx < 0 ? 'ok' : 'ko');
+  else {
+    swipeCardEl.style.transition = 'transform 0.25s, opacity 0.25s';
+    swipeCardEl.style.transform = '';
+    swipeLabelOk.style.opacity = '0';
+    swipeLabelKo.style.opacity = '0';
+  }
+});
+
+document.getElementById('swipe-close').addEventListener('click', () => {
+  swipeOverlay.classList.remove('open'); renderCurrent(); updateStats();
+});
+
+document.getElementById('btn-swipe').addEventListener('click', () => {
+  const all = filteredIndices();
+  const nonMastered = all.filter(i => getState(i) !== 'ok');
+  if (nonMastered.length === 0) { openSwipeMode(all); return; }
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:16px;padding:32px;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">📱 Mode Swipe</div>
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px">${all.length} cartes · <b>${nonMastered.length}</b> non maîtrisées</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="sw-ko" style="padding:12px 20px;border-radius:10px;border:none;background:var(--edo);color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer">🎯 Non maîtrisées (${nonMastered.length})</button>
+        <button id="sw-all" style="padding:12px 20px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9rem;font-weight:600;cursor:pointer">📚 Toutes (${all.length})</button>
+        <button id="sw-cancel" style="padding:8px;border:none;background:none;color:var(--muted);font-size:0.85rem;cursor:pointer">Annuler</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#sw-ko').addEventListener('click', () => { document.body.removeChild(overlay); openSwipeMode(nonMastered.slice()); });
+  overlay.querySelector('#sw-all').addEventListener('click', () => { document.body.removeChild(overlay); openSwipeMode(all.slice()); });
+  overlay.querySelector('#sw-cancel').addEventListener('click', () => document.body.removeChild(overlay));
 });
 
 // ══════════════════════════════════════════════════════
